@@ -1,0 +1,862 @@
+@import 'tailwindcss';
+
+/* ===========================================================================
+   QUIZON DESIGN TOKENS
+   Source of truth: ../../UI_ART_BIBLE.txt section 2 (one level above the
+   quizon/ project folder; it is not copied into the app).
+   This block holds EIGHT colours; --color-focus is an alias of --color-yellow,
+   not a ninth. Do not add one. Tints of these are permitted; nothing else is.
+   =========================================================================== */
+
+@theme {
+  /* --- Core roles ------------------------------------------------------ */
+  --color-cream: #fffdf4;
+  /* reading surface, default background        */
+  --color-indigo: #1a237e;
+  /* PRIMARY ink + hero surface                 */
+  --color-navy: #1a2b4c;
+  /* STRUCTURAL ink: borders, disabled, print    */
+  --color-turquoise: #00d2c4;
+  /* primary action                            */
+  --color-lime: #4bd37b;
+  /* success                                    */
+  --color-coral: #ff5e62;
+  /* error only                                 */
+  --color-yellow: #ffd13b;
+  /* highlight + reward                         */
+  --color-violet: #7b61ff;
+  /* category + sort. FILLS AND CHIPS ONLY.     */
+
+  /* --- 20% tints, for accent band backgrounds ------------------------- */
+  --color-indigo-soft: #d1d1dc;
+  --color-turquoise-soft: #ccf4ea;
+  --color-lime-soft: #dbf5dc;
+  --color-coral-soft: #ffded7;
+  --color-yellow-soft: #fff5cf;
+  --color-violet-soft: #e5def6;
+
+  /* --- Derived, not new hues ----------------------------------------- */
+  --color-turquoise-deep: #00a396;
+  /* Coco. A darkened TURQUOISE, so she does
+                                     not read as Tala. A tint, not a ninth
+                                     hue: same hue family as --color-turquoise. */
+  --color-on-turquoise: #1a237e;
+  /* indigo. NEVER white: white is 1.90:1 */
+  --color-on-lime: #1a237e;
+  /* indigo. NEVER white: white is 1.95:1      */
+  --color-focus: #ffd13b;
+  /* 3px focus ring, 2px offset                 */
+
+  /* --- Type ------------------------------------------------------------ */
+  --font-display: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+  --font-body: 'Nunito', 'Verdana', system-ui, sans-serif;
+
+  --text-display-xl: 2.75rem;
+  --text-display-xl--line-height: 3rem;
+  --text-display-lg: 2rem;
+  --text-display-lg--line-height: 2.375rem;
+  --text-display-md: 1.5rem;
+  --text-display-md--line-height: 1.875rem;
+
+  /* --- Radius: zero sharp corners in the entire product ---------------- */
+  --radius-card: 24px;
+  --radius-button: 20px;
+  --radius-sm: 12px;
+  --radius-pill: 999px;
+
+  /* --- Keyframes (art bible section 10) -------------------------------- */
+  --animate-float: float 2.4s ease-in-out infinite;
+  --animate-bounce-happy: bounce-happy 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-shake: shake 320ms ease-in-out;
+  --animate-slide-up: slide-up 280ms ease-out;
+  --animate-pup-name: pup-name-in 340ms ease-out both;
+  --animate-pup-tick: pup-tick-in 220ms ease-out both;
+  --animate-confetti: confetti-fall 1.7s ease-in forwards;
+  --animate-card-in: card-in 420ms cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
+  --animate-star-earn: star-earn 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-pulse-badge: pulse-badge 1800ms ease-in-out infinite;
+
+  /* --- Loading --------------------------------------------------------
+     A slow, low-contrast breath. Deliberately NOT a shimmer sweep: a moving
+     highlight across a placeholder reads as "something is happening over
+     here", and a child waiting on a phone on school wifi is better served by
+     a calm pulse that never draws the eye to a region that is about to be
+     replaced. Art bible 10.2 caps animation at 600ms except a pure decorative
+     idle, which this is. */
+  --animate-skeleton-pulse: skeleton-pulse 1600ms ease-in-out infinite;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes bounce-happy {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20% {
+    transform: translateX(-6px);
+  }
+
+  40% {
+    transform: translateX(6px);
+  }
+
+  60% {
+    transform: translateX(-4px);
+  }
+
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* The Hub stage cards rise in, left to right. Same `both` reasoning as the pup
+   names: without it a delayed card would flash at full opacity during its
+   delay and then pop. The stagger is inline per-index, so motion-reduced use is
+   handled in StageCarousel rather than relying on the global duration override. */
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* The pup name tag on the Hub bench. Each one fades in above its own head, and
+   the row staggers them left to right.
+
+   `BOTH` fill mode is what makes the stagger possible at all: with the default
+   `none`, a delayed animation would show the element at its resting style
+   during the delay, and the resting style is opacity 1 - so all eight names would
+   simply be visible from the start and then pop. `both` holds the `from` state
+   (opacity 0) until the delay elapses.
+
+   The delay is per-index inline, which is why the reduced-motion block cannot
+   rescue this on its own: it forces animation-duration to 0.01ms but says
+   nothing about animation-delay, so a motion-reduced learner would still stare
+   at eight empty gaps for up to two seconds. PupBench reads useReducedMotion
+   and renders the names plainly instead. */
+@keyframes pup-name-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* The bench's self-spotlight: the highlighted name pops into its glass pill
+   as it lands on a new pup. 220ms keeps it a tick, not a flourish. */
+@keyframes pup-tick-in {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Confetti. One keyframe, per-piece custom properties: each piece drops from
+   a random x across the top edge, drifts sideways to --cf-drift and spins to
+   --cf-tilt as it falls, then rest off-screen (108vh) - which is also how the
+   effect ends without a visible disappear. The ease-in gives the pieces the
+   accelerate-downweight of real confetti. */
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, -6vh, 0) rotate(var(--cf-rot, 0deg));
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate3d(var(--cf-drift, 0vw), 108vh, 0) rotate(var(--cf-tilt, 0deg));
+    opacity: 0.95;
+  }
+}
+
+@keyframes star-earn {
+  0% {
+    transform: scale(0);
+  }
+
+  60% {
+    transform: scale(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-badge {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.12);
+    opacity: 0.85;
+  }
+}
+
+@keyframes skeleton-pulse {
+
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* ===========================================================================
+   BASE
+   =========================================================================== */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* THE BLEND TARGET FOR THE BACKDROP, and the reason it lives on html.
+
+       The backdrop is `opacity: 0.5`, which means half the artwork and half
+       whatever is behind it. Behind it is this colour, so this is the colour the
+       photograph fades toward - change this and you change the mood of every
+       screen in the app.
+
+       It has to be a LIGHT blue. The app is a light theme: Hub puts
+       `text-indigo/85` and `text-navy/80` straight onto the page background with
+       no card behind them. Fading toward the palette's dark blues (indigo
+       #1a237e, navy #1a2b4c) would put dark text on a dark ground and quietly
+       destroy the Hub screen. Going pale blue instead also solves the original
+       complaint better than cream did - cream is so much lighter than the
+       artwork that a 50% blend washed it out to near-nothing, while a blue of
+       comparable lightness keeps more of the picture's colour.
+
+       This doubles as the Android overscroll colour, which is a bonus: a blue
+       edge beats the white flash it replaced. */
+    background-color: var(--backdrop-tint);
+  }
+
+  body {
+    /* TRANSPARENT, AND THIS IS LOAD-BEARING. The backdrop lives on
+       body::before at z-index -1. Painting order in the root stacking context
+       puts negative-z descendants SECOND, and in-flow block backgrounds THIRD -
+       so an opaque background-color here paints straight over the backdrop and
+       the page renders flat cream with the image invisible underneath it. That
+       is exactly what happened on the first attempt, and no amount of tweaking
+       the fade or the URL would have revealed it.
+
+       The cream therefore lives on html alone. One background is enough, and
+       keeping it on the root element is also what paints the overscroll area on
+       Android, where body does not always reach the edge of the viewport. */
+    background-color: transparent;
+    color: var(--color-indigo);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 24px;
+    /* Nothing important within 100px of a screen edge (art bible 5.3). */
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  /* Declared here rather than in @theme on purpose: that block is documented as
+     holding exactly eight colours with no additions, and --backdrop-tint is a
+     ninth colour by any honest reading. Keep it here so the palette stays
+     intact and the backdrop stays obviously tunable.
+
+     THE TWO KNOBS. --backdrop-strength is how much artwork shows (higher =
+     stronger picture). --backdrop-tint is what it fades toward (this is what
+     sets the mood). Change either one, nothing else about the backdrop moves. */
+  :root {
+    --backdrop-strength: 0.5;
+    /* Pale sky blue. NOT a tint of any palette colour - every indigo tint at
+       this lightness collapses to grey-lavender, because indigo #1a237e has
+       almost no green in it (R26 G35 B126). If the art bible's eight-colour
+       rule has to hold absolutely, swap this for
+       color-mix(in srgb, var(--color-indigo) 14%, var(--color-cream)) and
+       accept the greyer result. */
+    --backdrop-tint: #dbe9f7;
+
+  }
+
+  /* THE BACKDROP LAYER - one image behind every screen, faded but legible.
+     ------------------------------------------------------------------
+     WHY A PSEUDO-ELEMENT AND NOT background-image ON body.
+
+     Two ways to do this, and the obvious one is wrong here. `background-size:
+     cover` on body resolves against the body's FULL SCROLL HEIGHT, so on a
+     screen as long as a 20-question quiz the image is scaled to cover all of
+     it and ends up enormous and unreadable. `background-attachment: fixed` fixes
+     the framing but cannot be relied on in a mobile browser, and this app is
+     installed on cheap Android phones as a PWA.
+
+     A `position: fixed` layer does not care how long the content is: it is
+     always exactly one viewport. z-index -1 puts it above the html background
+     and below every card. body must stay transparent - see the note on the body
+     rule for why an opaque background here hides this layer completely.
+
+     HOW THE FADE ACTUALLY WORKS, since it is not a filter. There is no white
+     veil and no blur. `opacity: 0.5` means the artwork is composited at half
+     strength directly onto whatever shows through, which is `--backdrop-tint`
+     on html. So "fading toward blue" is literally just changing that one
+     variable - no second pseudo-element and no gradient needed.
+
+     It went 0.3 over cream first, then 0.5, then 0.5 over blue. At 0.3 over
+     cream #FFFDF4 the artwork washed out to about #B4EFED - technically
+     present, practically invisible, and not worth 167 KB. Cream is so much
+     lighter than the artwork that any high blend destroys it. Swapping the
+     blend target to pale blue #DBE9F7 fixes that at the same 0.5, because the
+     tint is closer in lightness to the picture and so cancels less of it.
+
+     WHAT IT COSTS. Cream cards are opaque, so text inside them is untouched.
+     The exposure is the few elements whose text sits directly on the page
+     background - `text-indigo/85` and `text-navy/80` hints in Hub. Indigo
+     headings on the blue blend land near 9:1, comfortably past AA. navy/80 is
+     the weak one, about 3.4:1 against the 4.5:1 threshold for normal text, and
+     it was already short at 3.6:1 before any of this - a pre-existing shortfall
+     rather than something the backdrop introduced. If it needs fixing the fix
+     is to drop the `/80` and use full-opacity navy, which is a text-only change
+     and leaves the backdrop exactly as strong as it is now. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url('/assets/world/app-backdrop.jpg');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    opacity: var(--backdrop-strength);
+  }
+
+  /* SKY CLOUDS - a slow drift behind every screen (SkyClouds.tsx).
+     ------------------------------------------------------------------
+     PAINTS BETWEEN THE BACKDROP AND THE APP. The backdrop is body::before at
+     z-index -1. This layer is ALSO z-index -1, and because it is a later
+     sibling in the root stacking context it paints AFTER the pseudo-element:
+     photograph first, clouds second, then every card, header and sheet on top.
+     So a cloud that slides "behind" a card really is behind it - the only
+     thing the sky gains is life.
+
+     WHY THERE IS NO KEYFRAME HERE. The first version animated a translateX
+     keyframe and the reduced-motion rule below (animation-duration: 0.01ms
+     !important on *) cancelled it even on a desktop. The motion is therefore
+     driven entirely from SkyClouds.tsx: a requestAnimationFrame loop writes a
+     translate3d transform onto each .cloud-drift element every frame, which
+     a CSS animation rule cannot override. This file only frames the layer and
+     sizes the artwork; the component owns the drift.
+
+     THE CLIPPING IS ON THE LAYER, NOT THE CLOUDS. The layer is a fixed
+     viewport box with overflow hidden and pointer-events none; each cloud is
+     an absolutely positioned image whose left edge is parked at `left: 0`
+     and slid across the viewport by the transform the component writes. A
+     cloud's top and opacity arrive as inline styles from the same component,
+     so nothing about a given sky is locked in here. */
+  .cloud-layer {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .cloud-drift {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform;
+  }
+
+  .cloud-drift img {
+    display: block;
+    height: auto;
+  }
+
+  /* THE ARTWORK IS LANDSCAPE AND EVERY SCREEN HERE IS PORTRAIT. This file is
+     1344x768; the art bible sets portrait-first at 360x640 minimum. `cover`
+     therefore crops the sides hard - on a 360px viewport roughly two thirds of
+     the image sits off-screen and only the middle strip is ever seen. That is a
+     composition problem to fix in the artwork, not in CSS: if there is something
+     in the centre of this image that has to stay visible, it needs a portrait
+     crop. */
+
+  main {
+    animation: var(--animate-slide-up);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  /* Focus ring is ALWAYS visible. 3px yellow, 2px offset, never removed. */
+  :focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Respect the OS setting. The app must be fully usable with motion off. */
+  @media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ===========================================================================
+   COMPONENT UTILITIES
+   These encode the non-negotiable accessibility rules so they cannot be
+   forgotten at a call site.
+   =========================================================================== */
+
+@layer components {
+
+  /* The primary button. RESET DESIGN 2026-10-06: the old 3px indigo outline
+     plus a 3px navy hard edge plus a white inset read as a heap of outlines,
+     and every control in the app carried it. The button is now a borderless
+     solid fill with a soft coloured edge that still compresses on press, so
+     the tactile feel survives without the comic-book outline. */
+  .btn-chunky {
+    border-radius: var(--radius-button);
+    box-shadow:
+      0 4px 0 0 rgb(26 43 76 / 0.18),
+      0 10px 18px -12px rgb(26 35 126 / 0.45);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 18px;
+    line-height: 22px;
+    letter-spacing: 0.01em;
+    transition:
+      transform 100ms ease,
+      box-shadow 100ms ease,
+      filter 150ms ease;
+  }
+
+  .btn-chunky:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.05) saturate(1.05);
+    box-shadow:
+      0 7px 0 0 rgb(26 43 76 / 0.14),
+      0 16px 22px -12px rgb(26 35 126 / 0.5);
+  }
+
+  .btn-chunky:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 0 rgb(26 43 76 / 0.18);
+  }
+
+  .btn-chunky:disabled {
+    box-shadow: 0 2px 0 0 rgb(26 43 76 / 0.2);
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  /* Answer option. 56px minimum, taller than the 44px touch minimum,
+     because these get tapped by a child in a hurry (art bible 5.3).
+     Borderless since the reset: idle is a cream fill with a soft edge, and
+     marked states carry their cue as a soft ring shadow, not an outline. */
+  .option-btn {
+    min-height: 56px;
+    border-radius: var(--radius-button);
+    background-color: var(--color-cream);
+    box-shadow:
+      0 3px 0 0 rgb(26 43 76 / 0.15),
+      0 8px 14px -12px rgb(26 35 126 / 0.4);
+    font-size: 17px;
+    font-weight: 600;
+    text-align: left;
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      background-color 180ms ease;
+  }
+
+  .option-btn.option-idle:hover:not(:disabled) {
+    background-color: var(--color-turquoise-soft);
+    box-shadow:
+      0 5px 0 0 rgb(26 43 76 / 0.12),
+      0 12px 16px -12px rgb(26 35 126 / 0.45);
+    transform: translateY(-1px);
+  }
+
+  .option-btn:active:not(:disabled) {
+    transform: scale(0.98);
+    box-shadow: 0 1px 0 0 rgb(26 43 76 / 0.18);
+  }
+
+  /* --- THREE-CHANNEL ANSWER STATE (art bible 2.4) --------------------
+     Colour is NEVER the only signal: each state also has an icon badge
+     and a physical shape change. Required because ~8% of boys and 0.5% of
+     girls have colour vision deficiency and they are in our audience. The
+     ring is indigo - a STRUCTURAL colour, not a feedback colour - so the
+     correct state reports even to a fully colour-blind eye. */
+  .option-correct {
+    background-color: var(--color-lime);
+    box-shadow:
+      0 0 0 3px var(--color-indigo),
+      0 3px 0 0 rgb(26 43 76 / 0.18);
+    transform: scale(1.03);
+  }
+
+  .option-incorrect {
+    background-color: var(--color-coral);
+    transform: rotate(2deg);
+  }
+
+  .option-idle {
+    background-color: var(--color-cream);
+  }
+
+  .card-cream {
+    background-color: var(--color-cream);
+    border-radius: var(--radius-card);
+    box-shadow:
+      0 1px 0 0 rgb(26 43 76 / 0.07),
+      0 18px 32px -22px rgb(26 35 126 / 0.55);
+  }
+
+  /* Hero banner: indigo surface with soft tint glows (art bible: indigo is
+     the hero surface). Text on it must be cream or yellow. Borderless since
+     the reset - the cream card is now borderless too, so the hero no longer
+     needs the navy outline to separate it from cards it no longer outlines. */
+  .hero-surface {
+    background:
+      radial-gradient(circle at 15% 20%, rgb(0 210 196 / 0.35), transparent 45%),
+      radial-gradient(circle at 90% 85%, rgb(123 97 255 / 0.45), transparent 50%),
+      var(--color-indigo);
+    color: var(--color-cream);
+    border-radius: var(--radius-card);
+    box-shadow: 0 20px 34px -20px rgb(26 35 126 / 0.7);
+  }
+
+  /* WOOF SCHOOL SKILL CARDS. One indigo surface for each of the eight
+     lessons, built from the Hub's depth stack so the module grid reads as the
+     same product as the stage cards it links into. The one difference is the
+     top-left glow: Skills.tsx carries each skill's accent in as --skill-glow
+     (the -soft tint), so eight identical cards each still keep a colour of
+     their own and a child can find "the green card" with the same ease they
+     find a pup.
+
+     The SURFACE is deliberately plain here - the drama on this screen is the
+     pup sticker that overlaps the top edge (flow layering, same as the
+     Welcome logo), so the surface must stay clear for it: no crown, no badge
+     band, light top rim and deep soft shadow only. */
+  .skill-surface {
+    --skill-glow: var(--color-turquoise-soft);
+    background:
+      radial-gradient(circle at 14% 2%, var(--skill-glow), transparent 50%),
+      radial-gradient(circle at 90% 100%, rgb(123 97 255 / 0.4), transparent 55%),
+      linear-gradient(180deg, #2e3a92 0%, var(--color-indigo) 64%);
+    border-radius: var(--radius-card);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.22),
+      inset 0 -12px 24px -14px rgb(0 0 0 / 0.42),
+      0 20px 34px -20px rgb(26 35 126 / 0.7);
+  }
+
+  /* --- DEPTH CARD: the Hub stage cards (art bible 7.1) -----------------
+     The three carousel cards are the app's most prominent interactive surface,
+     so they get their own depth language rather than reusing .hero-surface.
+
+     Three stacked layers, top to bottom, so the card reads as a raised tile
+     instead of a flat rectangle:
+       1. a turquoise glow in the top-left, the "light source" corner;
+       2. a violet glow in the bottom-right, the same pairing .hero-surface
+          already uses so the Hub and the hero screens feel related;
+       3. a vertical indigo gradient, slightly lighter at the top edge where the
+          light lands.
+
+     The inset highlights do the raised-edge work: a thin white top rim, and a
+     darker inset at the bottom so the surface curves away. The drop shadow is
+     deep and soft - a hard edge is exactly the comic outline the 2026-10-06
+     reset removed. */
+  .stage-card {
+    background:
+      radial-gradient(circle at 18% 8%, rgb(0 210 196 / 0.3), transparent 44%),
+      radial-gradient(circle at 88% 102%, rgb(123 97 255 / 0.4), transparent 50%),
+      linear-gradient(180deg, #2a3688 0%, var(--color-indigo) 58%);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.22),
+      inset 0 -12px 24px -14px rgb(0 0 0 / 0.45),
+      0 22px 34px -20px rgb(26 35 126 / 0.7);
+  }
+
+  /* Locked sibling. Desaturated exactly as art bible 7.1 requires, plus a faint
+     diagonal weave so it reads as "not yet" even in greyscale, where the colour
+     drop would otherwise be the only cue. */
+  .stage-card-locked {
+    background:
+      repeating-linear-gradient(135deg, rgb(26 43 76 / 0.05) 0 12px, transparent 12px 24px),
+      linear-gradient(180deg, #e2e2ea 0%, var(--color-indigo-soft) 100%);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.55),
+      0 18px 30px -22px rgb(26 43 76 / 0.55);
+  }
+
+  /* The huge icon plate. A turquoise gradient with a bright top rim and an
+     inset bottom shade, so the glyph sits IN a physical tile rather than on a
+     flat swatch. */
+  .stage-icon {
+    background: linear-gradient(180deg, #3fe3d6 0%, var(--color-turquoise) 55%, #00b3a6 100%);
+    box-shadow:
+      inset 0 3px 0 0 rgb(255 255 255 / 0.5),
+      inset 0 -10px 0 0 rgb(26 43 76 / 0.14),
+      0 12px 20px -12px rgb(26 35 126 / 0.6);
+  }
+
+  /* Locked plate: cream, drained of the turquoise, so the padlock is the only
+     thing with any weight left. */
+  .stage-icon-locked {
+    background: linear-gradient(180deg, #faf8ee 0%, #e8e5d8 100%);
+    box-shadow:
+      inset 0 3px 0 0 rgb(255 255 255 / 0.75),
+      inset 0 -10px 0 0 rgb(26 43 76 / 0.07);
+  }
+
+  /* Progress track and fill, for the status row on a stage card. The track is
+     cream-at-low-alpha over the indigo so it reads as a groove; the fill is the
+     system's success lime. Locked cards use the muted variant, because a full
+     strength reward colour on a door that is still shut would be a lie. */
+  .stage-progress {
+    background-color: rgb(255 253 244 / 0.22);
+  }
+
+  .stage-progress-fill {
+    background-color: var(--color-lime);
+  }
+
+  .stage-progress-locked {
+    background-color: rgb(26 43 76 / 0.15);
+  }
+
+  .stage-progress-fill-locked {
+    background-color: rgb(26 43 76 / 0.45);
+  }
+
+  /* Reading passage surface. 18px/28px is a floor, not a suggestion. */
+  .passage {
+    font-size: 18px;
+    line-height: 28px;
+    max-width: 55ch;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+  }
+
+  .skip-link:focus {
+    left: 8px;
+    top: 8px;
+    padding: 12px 16px;
+    background: var(--color-yellow);
+    color: var(--color-indigo);
+    border: 3px solid var(--color-indigo);
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+  }
+
+  /* Screen-only affordances. Buttons that exist to trigger window.print() are
+     useless on paper, so every print/export control carries .no-print. */
+  .no-print {
+    display: none !important;
+  }
+
+  /* --- LOADING PLACEHOLDERS (art bible 5.2, 10.2) ---------------------
+     Three rules make a skeleton read as "loading" rather than "broken":
+
+     1. It keeps the SHAPE of the real thing. Every placeholder below mirrors a
+        dimension in the screen it stands in for, so the page does not jump
+        when real content lands. A placeholder of the wrong height is worse
+        than a spinner because it moves the primary action.
+     2. It is inert. Never announced, never focusable, aria-hidden. A screen
+        reader should hear the loading message once and then the content, not
+        eight empty boxes.
+     3. It is still. The pulse is opacity only, and the global reduced-motion
+        rule below already neutralises it to a single static frame. */
+  .skeleton {
+    background-color: var(--color-indigo-soft);
+    animation: var(--animate-skeleton-pulse);
+  }
+
+  /* Bars resting on an INDIGO surface (.skill-surface, .stage-card, the result
+     panel): indigo-soft on indigo is invisible, so the same pulse runs on a
+     cream tint instead. Defined after .skeleton on purpose - equal
+     specificity, so source order is what lets it win. */
+  .skeleton-on-dark {
+    background-color: rgb(255 255 255 / 0.16);
+  }
+
+  /* Text-shaped: a line of words, not a block. */
+  .skeleton-line {
+    height: 14px;
+    border-radius: var(--radius-pill);
+  }
+
+  /* Title-shaped: taller and tighter radius, matches font-display at h1 size. */
+  .skeleton-title {
+    height: 28px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* A card-shaped placeholder. It carries the REAL card's fill, radius and
+     depth (identical to .card-cream above) rather than a grey box, because the
+     card is not what is loading - the card is already there, waiting for what
+     goes inside it. That is what stops the destination from "appearing" when
+     its chunk lands: the silhouette is already in place, only the contents
+     change. Content bars sit on top in .skeleton's indigo-soft. */
+  .skeleton-card {
+    background-color: var(--color-cream);
+    border-radius: var(--radius-card);
+    box-shadow:
+      0 1px 0 0 rgb(26 43 76 / 0.07),
+      0 18px 32px -22px rgb(26 35 126 / 0.55);
+  }
+
+  /* Circular, for a pup avatar waiting on its SVG. */
+  .skeleton-avatar {
+    border-radius: var(--radius-button);
+  }
+
+  /* The offline notice. Sits above everything, and is the only place the app
+     uses role="alert" for connectivity, because losing the network is the one
+     failure a learner must be told about rather than left to infer from a
+     screen that stopped changing. */
+  .offline-banner {
+    background-color: var(--color-yellow-soft);
+    box-shadow: 0 2px 0 0 rgb(26 43 76 / 0.12);
+  }
+}
+
+/* ===========================================================================
+   PRINT. The record page is a deliverable: teachers print it, and the
+   education group photocopies it in greyscale. Two rules follow from that.
+
+   1. Black on white. The navy is #1A2B4C, which is a fine screen colour but
+      prints as a heavy grey that smears on a photocopier, and the cream
+      background would print as a full page of grey. Both are overridden.
+   2. Borders survive. Feedback colours CANNOT: coral and lime are the only
+      two colours in the system that carry meaning without being readable as
+      text, and both collapse to similar greys. So the record states review
+      counts in TEXT and does not rely on a colour to say "this needs work".
+   =========================================================================== */
+
+@media print {
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 12pt;
+  }
+
+  /* Chrome off. Only the record itself should reach the paper. */
+  header,
+  nav,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Every coloured surface flattens to white with a black rule, so a
+     greyscale photocopy keeps the structure. Cards are BORDERLESS on
+     screen since the reset, so they get their outline only here, on the
+     paper where structure has to survive without colour. */
+  .card-cream,
+  section,
+  table,
+  tr {
+    background: #fff !important;
+    color: #000 !important;
+    border-color: #000 !important;
+    box-shadow: none !important;
+  }
+
+  .card-cream,
+  main section {
+    border: 2px solid #000 !important;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+
+  a[href]::after {
+    content: '';
+  }
+}

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="QuizOn">
+  <title>QuizOn!</title>
+  <!-- Speech bubble: the "kapatira / usap" reading of the name -->
+  <path
+    d="M120 64h272a64 64 0 0 1 64 64v208a64 64 0 0 1-64 64H228l-84 68a8 8 0 0 1-13-7V400h-11a64 64 0 0 1-64-64V128a64 64 0 0 1 64-64Z"
+    fill="#FFFDF4"
+    stroke="#1A2B4C"
+    stroke-width="18"
+    stroke-linejoin="round"
+  />
+  <!-- Fan of EIGHT paw prints: one per reading skill. Never change the count.
+       These replaced eight feathers when the helpers became dogs on
+       2026-10-04. Seven turquoise, one yellow. The yellow print is drawn last
+       so it sits on top and reads as the centre of the fan.
+
+       Each print is one pad plus four toes, drawn pointing away from the pivot
+       so the fan reads as eight separate marks and not one shape. -->
+  <defs>
+    <g id="paw">
+      <ellipse cx="0" cy="6" rx="15" ry="12.5" />
+      <ellipse cx="-13" cy="-14" rx="6" ry="8" transform="rotate(-20 -13 -14)" />
+      <ellipse cx="-4.5" cy="-20" rx="6" ry="8.5" />
+      <ellipse cx="4.5" cy="-20" rx="6" ry="8.5" />
+      <ellipse cx="13" cy="-14" rx="6" ry="8" transform="rotate(20 13 -14)" />
+    </g>
+  </defs>
+  <g stroke="#1A2B4C" stroke-width="10" stroke-linejoin="round" fill="#00D2C4">
+    <use href="#paw" transform="translate(139.3 313.3) rotate(-45) scale(0.70)" />
+    <use href="#paw" transform="translate(168.2 290.3) rotate(-32.14) scale(0.82)" />
+    <use href="#paw" transform="translate(201.5 274.3) rotate(-19.29) scale(0.92)" />
+    <use href="#paw" transform="translate(274.5 266) rotate(6.43) scale(0.94)" />
+    <use href="#paw" transform="translate(310.5 274.3) rotate(19.29) scale(0.83)" />
+    <use href="#paw" transform="translate(343.8 290.3) rotate(32.14) scale(0.70)" />
+    <use href="#paw" transform="translate(372.7 313.3) rotate(45) scale(0.70)" />
+    <use href="#paw" transform="translate(237.5 266) rotate(-6.43) scale(1.12)" fill="#FFD13B" />
+  </g>
+</svg>

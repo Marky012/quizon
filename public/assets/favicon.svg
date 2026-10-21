@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="QuizOn">
+  <title>QuizOn!</title>
+  <!-- Simplified mark: TWO paw prints only. At 16px a third print turns to
+       mush, so the favicon deliberately drops from eight to two. These
+       replaced two feathers when the helpers became dogs on 2026-10-04.
+       Same construction as the full mark: one pad plus four toes. -->
+  <rect width="64" height="64" rx="14" fill="#FFFDF4" />
+  <defs>
+    <g id="paw">
+      <ellipse cx="0" cy="6" rx="16" ry="13" />
+      <ellipse cx="-14" cy="-15" rx="6.5" ry="8.5" transform="rotate(-20 -14 -15)" />
+      <ellipse cx="-5" cy="-21" rx="6.5" ry="9" />
+      <ellipse cx="5" cy="-21" rx="6.5" ry="9" />
+      <ellipse cx="14" cy="-15" rx="6.5" ry="8.5" transform="rotate(20 14 -15)" />
+    </g>
+  </defs>
+  <g stroke="#1A2B4C" stroke-width="4.5" stroke-linejoin="round">
+    <use href="#paw" transform="translate(19 44) rotate(-16) scale(0.68)" fill="#00D2C4" />
+    <use href="#paw" transform="translate(45 44) rotate(16) scale(0.68)" fill="#FFD13B" />
+  </g>
+</svg>

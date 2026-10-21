@@ -1,0 +1,667 @@
+================================================================================
+WOOF GENERATION PROMPTS - REWRITE OF SECTION 14.2
+Written after the Tala test produced three feet and two human arms.
+================================================================================
+
+WHY THIS FILE EXISTS
+--------------------
+The old prompts failed anatomically. Four causes, all of them structural:
+
+  1. "She holds a magnifying glass ... in one front paw." The words "holds" and
+     "in one front paw" are an instruction to draw a HAND. Every "in one front
+     paw he holds X" line in the old set was asking for a grip, and a grip needs
+     fingers, so the model drew arms. It also lifted a front paw off the
+     baseline, and a lifted paw plus occlusion is how you get three feet.
+     RULE ADOPTED HERE: no pup holds, grips, carries or pinches anything. Props
+     rest on the ground, are worn on the body, or float in the air.
+
+  2. The negative prompt in art bible 14.6 bans bird anatomy but never bans
+     human anatomy. It lists feathers, beaks and talons, and not one of arms,
+     hands or fingers. The exact failure you saw was un-negated.
+     FIXED HERE: every block ends with its own MUST NOT CONTAIN line that bans
+     arms, hands, fingers, thumbs, wrists and elbows.
+
+  3. "Same set as seven other dogs:" is a cross-reference to a document the
+     model has never seen. It wasted a fifth of the prompt and reset the
+     description. It is gone. Each block now restates the full contract.
+
+  4. The set contract was buried in a single 500-word run-on paragraph, so the
+     anatomy rules arrived after the prop description and lost the weighting.
+     FIXED HERE: each block is split into labelled sections and the anatomy
+     lock is the second section, immediately after the subject.
+
+  You no longer append anything. Each block between the markers is complete.
+
+ALSO WORTH KNOWING
+------------------
+The old art bible palette was wrong. Section 2.1 says "EIGHT colours" and the
+CSS has eight tokens, but the 14.1 master suffix and all eight pup blocks list
+only SEVEN of them. Every block demanded a #1A2B4C outline that its own palette
+list forbade, and Coco's block described a #00A396 coat that its own palette
+list forbade. The palette line below is corrected to nine values: the eight
+tokens plus deep turquoise, which src/index.css carries as
+--color-turquoise-deep for Coco.
+
+================================================================================
+HOW TO USE
+================================================================================
+  1. Paste ONE block into your image generator. Paste one pup at a time.
+  2. Save the result under the SAVE AS name given in that pup's header.
+  3. Check it against MUST PASS before you accept it.
+  4. Only after idle is accepted, use the STATE DELTAS at the bottom of this
+     file to produce happy, hint and sleepy. Never generate the other three
+     states from this prompt, or the four states drift apart.
+
+================================================================================
+
+
+================================================================================
+TALA - Text Type - turquoise #00D2C4 - Shiba Inu
+SAVE AS: public/assets/pups/tala-idle.svg
+================================================================================
+<<<PASTE>>>
+SUBJECT: an original small dog reading helper, cheerful and curious, with a
+bright turquoise #00D2C4 coat. The dog is a Shiba Inu with small upright pointed
+triangular ears, a rounded cream muzzle, a curled tail carried up over the back,
+and a bright alert happy expression looking straight at the viewer. Her coat is
+one flat colour with no markings and no patches.
+
+ANATOMY LOCK, THIS IS THE MOST IMPORTANT LINE: the character is a DOG. Not a
+person, not a bird, not a mascot in a costume. It has exactly four legs - two in
+front and two behind - and exactly four paws, one at the end of each leg. All
+four paws rest on the same ground line, side by side, none lifted, none hidden,
+none overlapping. Each leg joins the body at a shoulder or a hip and ends in a
+simple rounded paw. Nothing is held, gripped, grasped, carried or pinched in any
+paw or in the mouth. No arms. No hands. No fingers. No thumbs. No wrists. No
+elbows. No human limbs of any kind.
+
+HER INSTRUMENT: on the ground directly in front of her two front paws lies a
+magnifying glass with a clear lens and a single flat white highlight, resting
+flat on top of a folded sheet of paper that is completely blank apart from faint
+ruled lines. The magnifier and the page lie flat on the ground and touch each
+other. This magnifier-over-page pair is her whole identity and is the largest,
+boldest, most prominent element in the image. She does not touch it with her
+paws or her mouth.
+
+CLOTHING: a small cream #FFFDF4 cap perched between her upright ears, positioned
+so that BOTH ears stay completely visible and completely uncovered. A turquoise
+bandana around her neck and a plain round badge on the bandana containing a
+small open-book shape and nothing else.
+
+STYLE: flat 2D vector illustration for a children's educational reading game,
+original character design, chunky rounded shapes, bold 3px dark navy #1A2B4C
+outline on every contour including every prop, and every interior line drawn at
+the same weight as the outline. Flat solid fills only: no gradients, no shading,
+no glow, no rim light, no soft blur, no texture. Rounded muzzle, large friendly
+eyes with a single white highlight dot, head about 40% of body height.
+
+PALETTE: colour is limited to exactly these nine values and nothing else: cream
+#FFFDF4, indigo #1A237E, navy #1A2B4C, turquoise #00D2C4, deep turquoise #00A396,
+lime #4BD37B, coral #FF5E62, yellow #FFD13B, violet #7B61FF. Use no other hue,
+tint or shade.
+
+TECHNICAL: straight-on eye-level view, full body visible, centred in frame,
+generous empty margin on all four sides, all four paws resting on one flat
+baseline near the bottom edge, one small rounded-triangle grounding shadow
+beneath the paws at 12% opacity, fully transparent background.
+
+MUST NOT CONTAIN: no text, letters, numbers, words or writing of any kind
+anywhere in the image, including on props; no arms, hands, fingers, thumbs,
+wrists or elbows; no human limbs; no paws that grip or hold anything; no extra
+legs, no missing legs, no three legs, no five legs, no legs fused or merged
+together; no leg hidden behind another leg; no tail growing out of the head; no
+feathers, no crest, no wings, no beak, no talons, no plumage; no photorealism,
+no 3D render, no anime or manga; no gradient, no coloured or scenic background,
+no drop shadow on the character outline; no thin outlines; no sharp corners on
+any shape; no peaked cap, no service cap, no cap emblem, no uniform, no
+police-style patch, no sheriff badge; no watermark, no signature, no logo; only
+one dog in the image.
+<<<END>>>
+
+
+================================================================================
+PIPOY - Purpose - violet #7B61FF - Basset Hound
+SAVE AS: public/assets/pups/pipoy-idle.svg
+================================================================================
+<<<PASTE>>>
+SUBJECT: an original small dog reading helper, thoughtful and wise, with a deep
+violet #7B61FF coat. The dog is a Basset Hound with a very long low body, short
+legs, very long low drooping ears that hang well past the jaw, a rounded heavy
+muzzle, a calm half-lidded thoughtful expression, and a tail carried low. His
+head is tilted slightly to one side as if listening. His coat is one flat colour
+with no markings and no patches.
+
+ANATOMY LOCK, THIS IS THE MOST IMPORTANT LINE: the character is a DOG. Not a
+person, not a bird, not a mascot in a costume. It has exactly four legs - two in
+front and two behind - and exactly four paws, one at the end of each leg. All
+four paws rest on the same ground line, side by side, none lifted, none hidden,
+none overlapping. Each leg joins the body at a shoulder or a hip and ends in a
+simple rounded paw. Nothing is held, gripped, grasped, carried or pinched in any
+paw or in the mouth. No arms. No hands. No fingers. No thumbs. No wrists. No
+elbows. No human limbs of any kind.
+
+HIS INSTRUMENT: on the ground directly in front of his two front paws lies a
+small rolled scroll tied with a thin cream #FFFDF4 ribbon. THE SCROLL IS
+COMPLETELY BLANK: no writing, no lines of text, no question mark, no symbol of
+any kind on it. The scroll is his whole identity and is the largest, boldest,
+most prominent element in the image. He does not touch it with his paws or his
+mouth.
+
+CLOTHING: a violet #7B61FF beret sitting between his long ears, positioned so
+that BOTH long ears stay completely visible and completely uncovered. A violet
+vest and a plain round badge on the vest with nothing inside it.
+
+STYLE: flat 2D vector illustration for a children's educational reading game,
+original character design, chunky rounded shapes, bold 3px dark navy #1A2B4C
+outline on every contour including every prop, and every interior line drawn at
+the same weight as the outline. Flat solid fills only: no gradients, no shading,
+no glow, no rim light, no soft blur, no texture. Rounded muzzle, large friendly
+eyes with a single white highlight dot, head about 40% of body height.
+
+PALETTE: colour is limited to exactly these nine values and nothing else: cream
+#FFFDF4, indigo #1A237E, navy #1A2B4C, turquoise #00D2C4, deep turquoise #00A396,
+lime #4BD37B, coral #FF5E62, yellow #FFD13B, violet #7B61FF. Use no other hue,
+tint or shade.
+
+TECHNICAL: straight-on eye-level view, full body visible, centred in frame,
+generous empty margin on all four sides, all four paws resting on one flat
+baseline near the bottom edge, one small rounded-triangle grounding shadow
+beneath the paws at 12% opacity, fully transparent background.
+
+MUST NOT CONTAIN: no text, letters, numbers, words or writing of any kind
+anywhere in the image, including on props; no arms, hands, fingers, thumbs,
+wrists or elbows; no human limbs; no paws that grip or hold anything; no extra
+legs, no missing legs, no three legs, no five legs, no legs fused or merged
+together; no leg hidden behind another leg; no tail growing out of the head; no
+feathers, no crest, no wings, no beak, no talons, no plumage; no photorealism,
+no 3D render, no anime or manga; no gradient, no coloured or scenic background,
+no drop shadow on the character outline; no thin outlines; no sharp corners on
+any shape; no peaked cap, no service cap, no cap emblem, no uniform, no
+police-style patch, no sheriff badge; no watermark, no signature, no logo; only
+one dog in the image.
+<<<END>>>
+
+
+================================================================================
+MAX - Main Topic - yellow #FFD13B - Golden Retriever
+SAVE AS: public/assets/pups/max-idle.svg
+================================================================================
+<<<PASTE>>>
+SUBJECT: an original small dog reading helper, focused, precise and calm, with a
+sunburst yellow #FFD13B coat. The dog is a Golden Retriever with medium floppy
+ears folded forward at the tips, a rounded muzzle, a broad fluffy chest, and a
+level tail held straight out horizontally to one side. He stands squarely facing
+straight ahead with a concentrated expression. His coat is one flat colour with
+no markings and no patches.
+
+ANATOMY LOCK, THIS IS THE MOST IMPORTANT LINE: the character is a DOG. Not a
+person, not a bird, not a mascot in a costume. It has exactly four legs - two in
+front and two behind - and exactly four paws, one at the end of each leg. All
+four paws rest on the same ground line, close together and evenly spaced, none
+lifted, none hidden, none overlapping. Each leg joins the body at a shoulder or
+a hip and ends in a simple rounded paw. Nothing is held, gripped, grasped,
+carried or pinched in any paw or in the mouth. No arms. No hands. No fingers.
+No thumbs. No wrists. No elbows. No human limbs of any kind.
+
+HIS INSTRUMENT: on the ground in front of him a yellow #FFD13B measuring tape
+unfurls in a smooth flat S-curve across the ground, with both of its ends lying
+flat on the ground. The tape is his whole identity and is the largest, boldest,
+most prominent element in the image. He stands over the tape; he does not hold
+it and he does not stretch his legs apart to span it. Behind his head sit four
+short solid triangular rays in the same yellow one step darker, drawn
+completely flat with absolutely no glow and no gradient.
+
+CLOTHING: a navy #1A2B4C flat cap worn forwards, positioned so that BOTH floppy
+ears stay completely visible and completely uncovered. A cream #FFFDF4 sweater
+and a plain round badge on the sweater with nothing inside it.
+
+STYLE: flat 2D vector illustration for a children's educational reading game,
+original character design, chunky rounded shapes, bold 3px dark navy #1A2B4C
+outline on every contour including every prop, and every interior line drawn at
+the same weight as the outline. Flat solid fills only: no gradients, no shading,
+no glow, no rim light, no soft blur, no texture. Rounded muzzle, large friendly
+eyes with a single white highlight dot, head about 40% of body height.
+
+PALETTE: colour is limited to exactly these nine values and nothing else: cream
+#FFFDF4, indigo #1A237E, navy #1A2B4C, turquoise #00D2C4, deep turquoise #00A396,
+lime #4BD37B, coral #FF5E62, yellow #FFD13B, violet #7B61FF. Use no other hue,
+tint or shade.
+
+TECHNICAL: straight-on eye-level view, full body visible, centred in frame,
+generous empty margin on all four sides, all four paws resting on one flat
+baseline near the bottom edge, one small rounded-triangle grounding shadow
+beneath the paws at 12% opacity, fully transparent background.
+
+MUST NOT CONTAIN: no text, letters, numbers, words or writing of any kind
+anywhere in the image, including on props; no arms, hands, fingers, thumbs,
+wrists or elbows; no human limbs; no paws that grip or hold anything; no extra
+legs, no missing legs, no three legs, no five legs, no legs fused or merged
+together; no leg hidden behind another leg; no splayed or frog-legged stance; no
+tail growing out of the head; no feathers, no crest, no wings, no beak, no
+talons, no plumage; no photorealism, no 3D render, no anime or manga; no
+gradient, no coloured or scenic background, no drop shadow on the character
+outline; no thin outlines; no sharp corners on any shape; no peaked cap, no
+service cap, no cap emblem, no uniform, no police-style patch, no sheriff
+badge; no watermark, no signature, no logo; only one dog in the image.
+<<<END>>>
+
+  NOTE ON MAX: the old prompt had him holding the tape "arms wide ... so that he
+  spans the whole of it", which contradicts the anatomy lock and forces splayed
+  front legs. The measuring metaphor is now carried by the level horizontal tail
+  plus the tape laid out on the ground. If you want the span pose back, it must
+  be drawn with all four paws down and the tape passing under him, never with a
+  lifted paw.
+
+
+================================================================================
+KOBE - Key Details - lime #4BD37B - English Pointer
+SAVE AS: public/assets/pups/kobe-idle.svg
+================================================================================
+<<<PASTE>>>
+SUBJECT: an original small dog reading helper, decisive and certain, with a lime
+green #4BD37B coat. The dog is an English Pointer with low-set medium-length
+floppy ears, a long rounded muzzle, a lean athletic body, and a level tail
+carried straight out horizontally. He stands squarely facing the viewer with a
+focused confident expression. His coat is one flat colour with no markings and
+no patches.
+
+ANATOMY LOCK, THIS IS THE MOST IMPORTANT LINE: the character is a DOG. Not a
+person, not a bird, not a mascot in a costume. It has exactly four legs - two in
+front and two behind - and exactly four paws, one at the end of each leg. All
+four paws rest on the same ground line, close together and evenly spaced, none
+lifted, none hidden, none overlapping. Each leg joins the body at a shoulder or
+a hip and ends in a simple rounded paw. Nothing is held, gripped, grasped,
+carried or pinched in any paw or in the mouth. No arms. No hands. No fingers.
+No thumbs. No wrists. No elbows. No human limbs of any kind.
+
+HIS INSTRUMENT: on the ground in front of him a short plain pointer stick lies
+flat, angled toward ONE flat solid wedge of pale yellow #FFD13B light that has a
+hard straight edge and absolutely no gradient, no glow and no blur. The pointer
+and the wedge are his whole identity and are the largest, boldest, most prominent
+elements in the image. He stands beside them and looks at the viewer. He does
+not hold the pointer and he does not raise a paw in this resting pose. A raised
+pointing paw appears only in the separate HINT state, never here.
+
+CLOTHING: a lime #4BD37B cap worn backwards, positioned so that BOTH low-set
+ears stay completely visible and completely uncovered. A plain round badge on
+his chest with nothing inside it, and no vest.
+
+STYLE: flat 2D vector illustration for a children's educational reading game,
+original character design, chunky rounded shapes, bold 3px dark navy #1A2B4C
+outline on every contour including every prop, and every interior line drawn at
+the same weight as the outline. Flat solid fills only: no gradients, no shading,
+no glow, no rim light, no soft blur, no texture. Rounded muzzle, large friendly
+eyes with a single white highlight dot, head about 40% of body height.
+
+PALETTE: colour is limited to exactly these nine values and nothing else: cream
+#FFFDF4, indigo #1A237E, navy #1A2B4C, turquoise #00D2C4, deep turquoise #00A396,
+lime #4BD37B, coral #FF5E62, yellow #FFD13B, violet #7B61FF. Use no other hue,
+tint or shade.
+
+TECHNICAL: straight-on eye-level view, full body visible, centred in frame,
+generous empty margin on all four sides, all four paws resting on one flat
+baseline near the bottom edge, one small rounded-triangle grounding shadow
+beneath the paws at 12% opacity, fully transparent background.
+
+MUST NOT CONTAIN: no text, letters, numbers, words or writing of any kind
+anywhere in the image, including on props; no arms, hands, fingers, thumbs,
+wrists or elbows; no human limbs; no paws that grip or hold anything; no extra
+legs, no missing legs, no three legs, no five legs, no legs fused or merged
+together; no leg hidden behind another leg; no raised or lifted paw in this
+image; no tail growing out of the head; no feathers, no crest, no wings, no
+beak, no talons, no plumage; no photorealism, no 3D render, no anime or manga; no
+gradient, no coloured or scenic background, no drop shadow on the character
+outline; no thin outlines; no sharp corners on any shape; no peaked cap, no
+service cap, no cap emblem, no uniform, no police-style patch, no sheriff
+badge; no watermark, no signature, no logo; only one dog in the image.
+<<<END>>>
+
+
+================================================================================
+SCARLETT - Sequence - indigo #1A237E - Rough Collie
+SAVE AS: public/assets/pups/scarlett-idle.svg
+================================================================================
+<<<PASTE>>>
+SUBJECT: an original small dog reading helper, orderly and patient, with a solid
+indigo #1A237E coat. The dog is a Rough Collie with semi-erect ears tipped
+forward, a long narrow rounded muzzle, a long neck, and a full plumed tail
+carried low. She stands tall, dignified and steady on all four legs, head high,
+facing straight at the viewer with a calm patient expression. Her coat is one
+flat colour with no markings and no patches.
+
+ANATOMY LOCK, THIS IS THE MOST IMPORTANT LINE: the character is a DOG. Not a
+person, not a bird, not a mascot in a costume. It has exactly four legs - two in
+front and two behind - and exactly four paws, one at the end of each leg. All
+four paws rest on the same ground line, side by side, none lifted, none hidden,
+none overlapping. Each leg joins the body at a shoulder or a hip and ends in a
+simple rounded paw. Nothing is held, gripped, grasped, carried or pinched in any
+paw or in the mouth. No arms. No hands. No fingers. No thumbs. No wrists. No
+elbows. No human limbs of any kind. She stands on four legs only and is not
+bipedal, not upright, and not standing like a person.
+
+HER INSTRUMENT: she stands with her paws on THREE flat rounded cream #FFFDF4
+stepping stones set in a shallow band of flat turquoise #00D2C4 water that
+carries exactly two single lighter ripple lines and no gradient. The three
+stepping stones are her whole identity and are the largest, boldest, most
+prominent elements in the image. She does not hold anything.
+
+CLOTHING: an indigo #1A237E visor cap pushed up and back on her head so that
+BOTH semi-erect ears stay completely visible and completely uncovered. A cream
+#FFFDF4 scarf around her neck and a plain round badge on the scarf with nothing
+inside it.
+
+STYLE: flat 2D vector illustration for a children's educational reading game,
+original character design, chunky rounded shapes, bold 3px dark navy #1A2B4C
+outline on every contour including every prop, and every interior line drawn at
+the same weight as the outline. Flat solid fills only: no gradients, no shading,
+no glow, no rim light, no soft blur, no texture. Rounded muzzle, large friendly
+eyes with a single white highlight dot, head about 40% of body height.
+
+PALETTE: colour is limited to exactly these nine values and nothing else: cream
+#FFFDF4, indigo #1A237E, navy #1A2B4C, turquoise #00D2C4, deep turquoise #00A396,
+lime #4BD37B, coral #FF5E62, yellow #FFD13B, violet #7B61FF. Use no other hue,
+tint or shade.
+
+TECHNICAL: straight-on eye-level view, full body visible, centred in frame,
+generous empty margin on all four sides, all four paws resting on one flat
+baseline near the bottom edge, one small rounded-triangle grounding shadow
+beneath the paws at 12% opacity, fully transparent background.
+
+MUST NOT CONTAIN: no text, letters, numbers, words or writing of any kind
+anywhere in the image, including on props; no arms, hands, fingers, thumbs,
+wrists or elbows; no human limbs; no paws that grip or hold anything; no extra
+legs, no missing legs, no three legs, no five legs, no legs fused or merged
+together; no leg hidden behind another leg; no standing on two legs; no upright
+human posture; no three-quarter or side view; no tail growing out of the head; no
+feathers, no crest, no wings, no beak, no talons, no plumage; no photorealism,
+no 3D render, no anime or manga; no gradient inside the water, no coloured or
+scenic background, no drop shadow on the character outline; no thin outlines; no
+sharp corners on any shape; no peaked cap, no service cap, no cap emblem, no
+uniform, no police-style patch, no sheriff badge; no watermark, no signature, no
+logo; only one dog in the image.
+<<<END>>>
+
+  TWO EDITS WERE MADE HERE. The old prompt said she stands "very upright" and
+  "faces slightly to the LEFT in three-quarter view", which contradicted both
+  the set contract and the no-bipedal rule. She is now straight-on and on four
+  legs. The stepping stones are also cream rather than uncoloured, because
+  cream separates cleanly from both her indigo coat and the turquoise water,
+  where an uncoloured stone would have disappeared into one or the other.
+
+
+================================================================================
+WAFFLE - Wh-Questions - navy #1A2B4C - Papillon
+SAVE AS: public/assets/pups/waffle-idle.svg
+================================================================================
+<<<PASTE>>>
+SUBJECT: an original small dog reading helper, alert and watchful, with a navy
+blue #1A2B4C coat. The dog is a Papillon with huge fringed butterfly ears that
+spread out to either side of its head, a small fine-boned body, a rounded muzzle,
+a plumed tail carried high, and an alert expression with its mouth slightly
+open, facing straight at the viewer. His coat is one flat colour with no
+markings and no patches.
+
+ANATOMY LOCK, THIS IS THE MOST IMPORTANT LINE: the character is a DOG. Not a
+person, not a bird, not a mascot in a costume. It has exactly four legs - two in
+front and two behind - and exactly four paws, one at the end of each leg. All
+four paws rest on the same ground line, close together and evenly spaced, none
+lifted, none hidden, none overlapping. Each leg joins the body at a shoulder or
+a hip and ends in a simple rounded paw. Nothing is held, gripped, grasped,
+carried or pinched in any paw or in the mouth. No arms. No hands. No fingers.
+No thumbs. No wrists. No elbows. No human limbs of any kind.
+
+HIS INSTRUMENT: ONE of his eyes is noticeably larger than the other, and that
+large eye sits inside a bold square bracket drawn beside his head, framing the
+eye like a picture frame. CRITICAL: because his coat is navy, the bracket MUST
+be drawn in cream #FFFDF4 and NOT in navy, or it disappears into his own body.
+The bracket has ROUNDED corners, never sharp ones. It is an empty outline with
+nothing inside it and no question mark and no dot, because every letter in this
+product is added later in code. The bracket floats in the air beside his head.
+He does not wear it, hold it or touch it. The bracket and the large eye are his
+whole identity and are the largest, boldest, most prominent elements in the
+image.
+
+CLOTHING: a navy #1A2B4C cap fitted BETWEEN his two enormous fringed ears so
+that both ears stay completely visible and completely uncovered and spread out
+to either side of it. A navy #1A2B4C bow tie and a plain round badge on his chest
+with nothing inside it.
+
+STYLE: flat 2D vector illustration for a children's educational reading game,
+original character design, chunky rounded shapes, bold 3px dark navy #1A2B4C
+outline on every contour including every prop, and every interior line drawn at
+the same weight as the outline. Because his coat is the same navy as the
+outline, keep the outline bold and unbroken so the body edge stays readable.
+Flat solid fills only: no gradients, no shading, no glow, no rim light, no soft
+blur, no texture. Rounded muzzle, large friendly eyes with a single white
+highlight dot, head about 40% of body height.
+
+PALETTE: colour is limited to exactly these nine values and nothing else: cream
+#FFFDF4, indigo #1A237E, navy #1A2B4C, turquoise #00D2C4, deep turquoise #00A396,
+lime #4BD37B, coral #FF5E62, yellow #FFD13B, violet #7B61FF. Use no other hue,
+tint or shade.
+
+TECHNICAL: straight-on eye-level view, full body visible, centred in frame,
+generous empty margin on all four sides, all four paws resting on one flat
+baseline near the bottom edge, one small rounded-triangle grounding shadow
+beneath the paws at 12% opacity, fully transparent background.
+
+MUST NOT CONTAIN: no text, letters, numbers, words or writing of any kind
+anywhere in the image, including on props; no arms, hands, fingers, thumbs,
+wrists or elbows; no human limbs; no paws that grip or hold anything; no extra
+legs, no missing legs, no three legs, no five legs, no legs fused or merged
+together; no leg hidden behind another leg; no tail growing out of the head; no
+feathers, no crest, no wings, no beak, no talons, no plumage; a square bracket
+with rounded corners only, never sharp corners; a navy bracket on a navy dog,
+which is invisible; a question mark inside the bracket; no photorealism, no 3D
+render, no anime or manga; no gradient, no coloured or scenic background, no
+drop shadow on the character outline; no thin outlines; no sharp corners on any
+shape; no peaked cap, no service cap, no cap emblem, no uniform, no
+police-style patch, no sheriff badge; no watermark, no signature, no logo; only
+one dog in the image.
+<<<END>>>
+
+
+================================================================================
+FRANKY - Fact or Opinion - cream #FFFDF4 - Pug
+SAVE AS: public/assets/pups/franky-idle.svg
+================================================================================
+<<<PASTE>>>
+SUBJECT: an original small dog reading helper, serious and balanced, with a
+cream #FFFDF4 coat. The dog is a Pug with small rose-folded ears, a rounded flat
+muzzle, a compact body, a tightly curled tail, and a calm steady symmetrical
+expression. He stands squarely facing straight at the viewer. His coat is one
+flat colour with no markings and no patches.
+
+ANATOMY LOCK, THIS IS THE MOST IMPORTANT LINE: the character is a DOG. Not a
+person, not a bird, not a mascot in a costume. It has exactly four legs - two in
+front and two behind - and exactly four paws, one at the end of each leg. All
+four paws rest on the same ground line, side by side, none lifted, none hidden,
+none overlapping. Each leg joins the body at a shoulder or a hip and ends in a
+simple rounded paw. Nothing is held, gripped, grasped, carried or pinched in any
+paw or in the mouth. No arms. No hands. No fingers. No thumbs. No wrists. No
+elbows. No human limbs of any kind.
+
+OUTLINE IS THE DESIGN, DO NOT SKIP THIS: his cream coat is the same value as
+the cream page background, so the outline is the only thing separating him from
+the background. Give him the boldest possible 3px dark navy #1A2B4C outline on
+every single contour, including his ears, legs, paws, cap and the scale. Use
+navy #1A2B4C also for his eye pupils, his nose, his mouth line and every interior
+line. Leave NO interior area as pure bright white, or it will read as a hole
+punched through the character.
+
+HIS INSTRUMENT: on the ground directly beside his front paws stands a small
+two-pan balance scale with a perfectly level beam, resting on the ground. The
+balance scale is his whole identity and is the largest, boldest, most prominent
+element in the image. He does not hold it with his paws or his mouth.
+
+CLOTHING: a cream #FFFDF4 cap resting on the crown of his head between his
+rose-folded ears so that BOTH ears stay completely visible and completely
+uncovered. A navy #1A2B4C collar with a plain circular tag and no vest.
+
+STYLE: flat 2D vector illustration for a children's educational reading game,
+original character design, chunky rounded shapes, bold 3px dark navy #1A2B4C
+outline on every contour including every prop, and every interior line drawn at
+the same weight as the outline. Flat solid fills only: no gradients, no shading,
+no glow, no rim light, no soft blur, no texture. Rounded muzzle, large friendly
+eyes with a single white highlight dot, head about 40% of body height.
+
+PALETTE: colour is limited to exactly these nine values and nothing else: cream
+#FFFDF4, indigo #1A237E, navy #1A2B4C, turquoise #00D2C4, deep turquoise #00A396,
+lime #4BD37B, coral #FF5E62, yellow #FFD13B, violet #7B61FF. Use no other hue,
+tint or shade. In particular, keep every large area of the body at cream #FFFDF4
+and rely on the navy outline for separation, rather than tinting the coat.
+
+TECHNICAL: straight-on eye-level view, full body visible, centred in frame,
+generous empty margin on all four sides, all four paws resting on one flat
+baseline near the bottom edge, one small rounded-triangle grounding shadow
+beneath the paws at 12% opacity, fully transparent background.
+
+MUST NOT CONTAIN: no text, letters, numbers, words or writing of any kind
+anywhere in the image, including on props; no arms, hands, fingers, thumbs,
+wrists or elbows; no human limbs; no paws that grip or hold anything; no extra
+legs, no missing legs, no three legs, no five legs, no legs fused or merged
+together; no leg hidden behind another leg; no tail growing out of the head; no
+feathers, no crest, no wings, no beak, no talons, no plumage; a thin or broken
+outline on any contour, which is the one thing that would make this character
+invisible; any interior area of pure bright white; no photorealism, no 3D render,
+no anime or manga; no gradient, no coloured or scenic background, no drop
+shadow on the character outline; no sharp corners on any shape; no peaked cap,
+no service cap, no cap emblem, no uniform, no police-style patch, no sheriff
+badge; no watermark, no signature, no logo; only one dog in the image.
+<<<END>>>
+
+  CHECK HIM ON A CREAM FIELD, NOT ON WHITE. He is cream, and a cream dog on a
+  white artboard is invisible no matter how good the prompt is.
+
+
+================================================================================
+COCO - Characters - deep turquoise #00A396 - Philippine Aspin
+SAVE AS: public/assets/pups/coco-idle.svg
+================================================================================
+<<<PASTE>>>
+SUBJECT: an original small dog reading helper, social and curious, with a deep
+turquoise #00A396 coat. The dog is a Philippine Aspin with semi-erect ears, one
+of which stands up while the other flops over, a rounded muzzle, a lean body, and
+a low curved tail. She stands with all four paws down, her head turned slightly
+to one side as if listening to somebody just off-frame. Her coat is one flat
+colour with no markings and no patches.
+
+ANATOMY LOCK, THIS IS THE MOST IMPORTANT LINE: the character is a DOG. Not a
+person, not a bird, not a mascot in a costume. It has exactly four legs - two in
+front and two behind - and exactly four paws, one at the end of each leg. All
+four paws rest on the same ground line, close together and evenly spaced, none
+lifted, none hidden, none overlapping. Each leg joins the body at a shoulder or
+a hip and ends in a simple rounded paw. Nothing is held, gripped, grasped,
+carried or pinched in any paw or in the mouth. No arms. No hands. No fingers.
+No thumbs. No wrists. No elbows. No human limbs of any kind. She does not raise
+a paw toward her face in this resting pose; a raised paw appears only in the
+separate HINT state, never here.
+
+HER INSTRUMENT: floating in the air beside her head are TWO empty overlapping
+rounded speech bubbles, drawn as flat cream #FFFDF4 outlines with completely
+blank interiors, with no writing inside them and no tails of speech, because
+every letter in this product is added later in code. The paired bubbles are her
+whole identity and are the largest, boldest, most prominent elements in the
+image. They float; she does not hold them or touch them.
+
+CLOTHING: a deep turquoise #00A396 cap tilted back off her forehead so that BOTH
+ears, the one standing and the one flopped, stay completely visible and
+completely uncovered. A deep turquoise #00A396 bandana around her neck and a
+plain round badge on the bandana with nothing inside it.
+
+STYLE: flat 2D vector illustration for a children's educational reading game,
+original character design, chunky rounded shapes, bold 3px dark navy #1A2B4C
+outline on every contour including every prop, and every interior line drawn at
+the same weight as the outline. Flat solid fills only: no gradients, no shading,
+no glow, no rim light, no soft blur, no texture. Rounded muzzle, large friendly
+eyes with a single white highlight dot, head about 40% of body height.
+
+PALETTE: colour is limited to exactly these nine values and nothing else: cream
+#FFFDF4, indigo #1A237E, navy #1A2B4C, turquoise #00D2C4, deep turquoise #00A396,
+lime #4BD37B, coral #FF5E62, yellow #FFD13B, violet #7B61FF. Use no other hue,
+tint or shade. Her own coat is deep turquoise #00A396, which is one step darker
+than Tala's #00D2C4; do not substitute the lighter turquoise for her.
+
+TECHNICAL: straight-on eye-level view, full body visible, centred in frame,
+generous empty margin on all four sides, all four paws resting on one flat
+baseline near the bottom edge, one small rounded-triangle grounding shadow
+beneath the paws at 12% opacity, fully transparent background.
+
+MUST NOT CONTAIN: no text, letters, numbers, words or writing of any kind
+anywhere in the image, including inside the bubbles; no arms, hands, fingers,
+thumbs, wrists or elbows; no human limbs; no paws that grip or hold anything; no
+extra legs, no missing legs, no three legs, no five legs, no legs fused or
+merged together; no leg hidden behind another leg; no raised or lifted paw in
+this image; no tail growing out of the head; no feathers, no crest, no wings, no
+beak, no talons, no plumage; no photorealism, no 3D render, no anime or manga; no
+gradient, no coloured or scenic background, no drop shadow on the character
+outline; no thin outlines; no sharp corners on any shape; no peaked cap, no
+service cap, no cap emblem, no uniform, no police-style patch, no sheriff
+badge; no watermark, no signature, no logo; only one dog in the image.
+<<<END>>>
+
+
+================================================================================
+MUST PASS - CHECK EVERY FILE BEFORE YOU ACCEPT IT
+================================================================================
+Count these in order. If any fails, re-roll rather than fix it by hand.
+
+  1. Exactly four legs and exactly four paws. Count them out loud. Two in front,
+     two behind. This is the check that catches the failure you already hit.
+  2. Zero arms, zero hands, zero fingers, zero thumbs, zero wrists, zero elbows.
+  3. No paw is gripping, holding, grasping or carrying anything.
+  4. All four paws touch the ground. Nothing is lifted.
+  5. The coat hex is correct for that pup. Check the hex, do not eyeball it.
+  6. The breed and the ears match the 3.2 row exactly. A model asked for "a
+     dog" drifts to a generic pointy-eared pup, and eight of those is not a cast.
+  7. The cap is present, is not a peaked or service cap, has no emblem, and does
+     not cover or clip either ear.
+  8. The outfit is that pup's own, and is not shared with another pup.
+  9. No text or writing anywhere, including on props.
+ 10. Flat fills only. No gradient, glow or rim light on any focal element.
+ 11. The instrument is present and is the most prominent thing in the image.
+ 12. Viewed at 88px, this pup is not any of the other seven.
+
+SPECIFIC PAIRS TO CHECK AT 88PX
+  - Scarlett and Waffle. Both are very dark blue, #1A237E and #1A2B4C. This is a
+    palette collision, not a drawing problem. They are separated by silhouette
+    and pose only. If they still read as the same pup, do NOT repaint either one
+    a ninth colour: raise it in System_Notes.txt and let the education group
+    decide between a lighter navy and moving Waffle to deep turquoise.
+  - Coco and Tala. Both are turquoise, #00A396 and #00D2C4, separated by head
+    direction and the bubbles rather than by hue. Check this pair at 88px too.
+  - Franky on a CREAM field, never on white. His outline is load-bearing.
+
+================================================================================
+STATE DELTAS - ONLY AFTER THE IDLE STATE IS ACCEPTED
+================================================================================
+Re-roll from the ACCEPTED idle image, not from the prompt above, or the four
+states drift apart. Keep everything else identical and change only the listed
+parts.
+
+  HAPPY    eyes become upward-curving arcs, both ears up, tail mid-wag.
+            Correct-answer state. This is the only state with a wag.
+
+  HINT     one front paw extended forward and outward toward the answer area,
+            eyes looking in that direction, ears forward. This is the helper
+            pose and it must read as "look over here". It is a PAW, not a wing.
+            This is the ONE state where a front paw leaves the baseline, and it
+            is deliberate. The other three back legs stay planted and the
+            extended paw keeps its rounded dog-paw shape with no fingers. The
+            cap does not move and the ears do not change shape in any state.
+
+  SLEEPY   head tilted to one side, ears drooping, eyes half closed. Used on the
+            roster for the weakest skill.
+
+  ANIMATION IS CSS ONLY. Each pup ships as one static SVG per state. No
+  spritesheet, no frame atlas, no GIF, no Lottie, no video, no skeletal rig.
+
+  FILE NAMES, all 32:
+    public/assets/pups/tala-idle.svg      and tala-happy.svg, tala-hint.svg,
+                                            tala-sleepy.svg
+    ...same pattern for pipoy, max, kobe, scarlett, waffle, franky and coco
+    public/assets/pups/{pup}-avatar.png   256x256 circular bust, one per pup
+
+================================================================================
+END
+================================================================================
