@@ -7,6 +7,7 @@ import {
   selectHintablePups,
 } from './gameStore'
 import { SKILL_IDS } from '@/content/manifest'
+import { buildSyncPayload } from '@/sync/payload'
 
 /* ===========================================================================
    THE HINT UNLOCK GATE, tested at the store level.
@@ -251,14 +252,25 @@ describe('player profile', () => {
     expect(s.playerName).toBe('')
   })
 
-  it('never puts the nickname into the teacher report or the export', () => {
+  it('never puts the nickname into the teacher report or the synced payload', () => {
     useGameStore.getState().createProfile('girl', 'Mia')
     const report = useGameStore.getState().getStudentReport()
-    const exportText = useGameStore.getState().exportStudentData()
+    const payload = buildSyncPayload({
+      classCode: 'QZ4821',
+      learnerCode: useGameStore.getState().learnerCode,
+      deviceId: 'device-1',
+      skills: useGameStore.getState().skills,
+      tiers: useGameStore.getState().tiers,
+      totals: useGameStore.getState().totals,
+      skillMissedCount: useGameStore.getState().skillMissedCount,
+      history: useGameStore.getState().history,
+      report,
+      now: 1_700_000_000_000,
+    })
     expect(JSON.stringify(report)).not.toContain('Mia')
-    expect(exportText).not.toContain('Mia')
-    // The export still pins the anonymous learner code, not a name.
-    expect(exportText).toContain(useGameStore.getState().learnerCode)
+    expect(JSON.stringify(payload)).not.toContain('Mia')
+    // The payload pins the anonymous learner code, not a name.
+    expect(payload.learnerCode).toBe(useGameStore.getState().learnerCode)
   })
 })
 

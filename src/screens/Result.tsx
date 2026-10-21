@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ScreenFrame } from '@/components/ScreenFrame'
 import { PupAvatar } from '@/components/PupAvatar'
 import { SkillSymbol } from '@/components/SkillSymbol'
+import { SyncBadge } from '@/components/SyncBadge'
 import { SKILLS, TEACHER } from '@/content/manifest'
 import { TIER_ORDER, WORLD, type TierId } from '@/content/world'
 import { attemptsLeft, bestScore, isPassing } from '@/logic/scoring'
@@ -79,7 +80,6 @@ export function Result() {
 
   const state = useGameStore((s) => (tierId ? s.tiers[tierId] : undefined))
   const missed = useGameStore((s) => s.skillMissedCount)
-  const [exported, setExported] = useState(false)
 
   /* The celebration fires here and ONLY here.
      Quiz used to play it too as it navigated here, so passing a level played the
@@ -118,18 +118,6 @@ export function Result() {
 
   const nextTier = TIER_ORDER[TIER_ORDER.indexOf(tierId) + 1]
   const nextUnlocked = passed && nextTier !== undefined
-
-  function doExport() {
-    const data = useGameStore.getState().exportStudentData()
-    const blob = new Blob([data], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `quizon-${useGameStore.getState().learnerCode}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-    setExported(true)
-  }
 
   return (
     <ScreenFrame
@@ -249,7 +237,10 @@ export function Result() {
           Best so far: {best}%. Attempts used: {state.attempts.length} of 3.
         </p>
 
-        {/* Print and Export are PRIMARY here, never buried in settings. */}
+        {/* The record now travels by itself. The learner does not save a file
+            and hand it over; the device sends it to the teacher's dashboard
+            when it can. Printing stays, because a paper copy still goes into
+            the pupil's DepEd portfolio. */}
         <div className="flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
@@ -259,17 +250,8 @@ export function Result() {
           >
             Print my report
           </button>
-          <button
-            type="button"
-            onClick={doExport}
-            className="btn-chunky flex-1 bg-yellow py-4 text-indigo"
-          >
-            Save my data
-          </button>
         </div>
-        <p className="text-center text-sm text-navy/80">
-          {exported ? 'Saved. Give it to your teacher.' : 'Save your data for your teacher.'}
-        </p>
+        <SyncBadge className="justify-center text-center" />
       </div>
     </ScreenFrame>
   )

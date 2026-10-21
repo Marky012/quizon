@@ -77,12 +77,13 @@ Boot → Welcome (choose a helper) → Profile (character + nickname) → Intro 
 | Category | Highlights |
 |----------|------------|
 | <img src="images/icons/api-cloud.svg" width="18" height="18" valign="middle"/> **Offline-First PWA** | ~10 MB precache, service worker with `autoUpdate`, deep links resolve offline. No network needed after the first load |
+| <img src="images/icons/road-map-pin.svg" width="18" height="18" valign="middle"/> **Automatic Teacher Sync** | The learner types a class code once. The device then sends the record to the teacher's dashboard by itself whenever it has a connection - no file, no hand-off, nothing for a child to remember |
 | <img src="images/icons/urban-planning.svg" width="18" height="18" valign="middle"/> **Six Local Passages** | News, how-to, description and narrative set in Barangay Quezon and the Caraga region — *Heavy Rains over Agusan Island*, *Rice Price Drops at the Market*, *How to Plant Rice*, *How to Cook Tinolang Bahay*, *The Agusan River*, *A Night by the Shore* |
 | <img src="images/icons/console-controller.svg" width="18" height="18" valign="middle"/> **The Woof Pack** | 8 reading skills, each taught by a pup whose name starts with the skill's initial — a memory hook, not decoration |
 | <img src="images/icons/features.svg" width="18" height="18" valign="middle"/> **Dual-Gate Assessment** | Pre-Test demands **5/5** to earn a helper (free retries). A Reading Trail tier demands **70% (14/20)**, capped at **3 attempts** so the teacher gets a "needs attention" flag instead of a silent failure |
 | <img src="images/icons/code-window.svg" width="18" height="18" valign="middle"/> **Adaptive Engine** | Miss-weighted question selection (up to **5×** weight on repeated misses) + Fisher-Yates option shuffling that removes positional bias |
 | <img src="images/icons/browser-ui.svg" width="18" height="18" valign="middle"/> **Three-Channel Feedback** | Color **+** icon badge **+** written word (*TAMA* / *MALI*). Color is never the only signal, so color-vision-deficient learners are not excluded |
-| <img src="images/icons/database.svg" width="18" height="18" valign="middle"/> **Progress & Reporting** | Mastery per skill, weakest-skill review list, printable one-page report card, and a JSON export of learner data |
+| <img src="images/icons/database.svg" width="18" height="18" valign="middle"/> **Progress & Reporting** | Mastery per skill, weakest-skill review list, printable one-page report card, and a one-line status telling the learner whether their teacher has their record yet |
 | <img src="images/icons/web-test.svg" width="18" height="18" valign="middle"/> **Keyboard & Screen Reader Ready** | Roving tabindex, `A–D` / `1–4` answer shortcuts, `radiogroup` roles with live `alert` / `status` regions, `prefers-reduced-motion` support |
 | <img src="images/icons/time-fast.svg" width="18" height="18" valign="middle"/> **Zero Media Overhead** | No video, no audio files. Sound effects are synthesized with the Web Audio API, so the whole app stays under ~10 MB |
 
@@ -138,7 +139,7 @@ Boot → Welcome (choose a helper) → Profile (character + nickname) → Intro 
 
 ### <img src="images/icons/api-cloud.svg" width="20" height="20" valign="middle"/> PWA & Offline
 - **vite-plugin-pwa 1.3** + **Workbox** — `generateSW`, `autoUpdate`, `navigateFallback: '/index.html'`
-- Precaches **every** JS/CSS/HTML/SVG/PNG/JPG/WOFF2 chunk — 49 entries, ~10 MB
+- Precaches **every** JS/CSS/HTML/SVG/PNG/JPG/WOFF2 chunk — 50 entries, ~10 MB
 - **Web Audio API** oscillator synthesis for all sound effects — no audio files shipped
 
 ### <img src="images/icons/web-test.svg" width="20" height="20" valign="middle"/> Dev Tools & Testing
@@ -271,6 +272,29 @@ src/logic/select.ts       → shuffle + remap correctIndex + miss-weighted picki
 
 Integrity is enforced by tests: every `skillTested` must match a manifest skill name, every `passageId` must resolve, every distractor must carry an `errorTag`, and every skill must have exactly 5 pre-test items.
 
+### Sync to the teacher's dashboard
+
+The learner types a class code once, in **Settings**. From then on the device sends its record to the teacher's dashboard **by itself**, and the learner never has to save a file or hand anything over.
+
+```
+src/sync/types.ts     → the wire format (one JSON document, versioned)
+src/sync/payload.ts   → builds it, and the signature that says "is this worth sending?"
+src/sync/storage.ts   → the pending slot and the device id
+src/sync/client.ts    → one POST, with a timeout
+src/sync/manager.ts   → the four triggers: online, progress, foreground, heartbeat
+```
+
+Four things make this safe in a classroom where nothing has a data plan:
+
+- **The payload is a full snapshot, not a delta.** A lost request costs nothing — the next one carries everything, so there is no queue to drain and no order to respect.
+- **The pending slot is one slot, not a queue.** The newest snapshot replaces the old one. A failed send leaves the learner's work on the device, and the next trigger tries again.
+- **The progress signature gates the traffic.** It moves on milestones and every ten answers, not on every tap, so a class of thirty children on one hotspot does not saturate it.
+- **The feature is off when it is not configured.** With no `VITE_SYNC_ENDPOINT` in the build, the app never touches the network and the game behaves exactly as it always did.
+
+**Privacy:** the only identifier that travels is the anonymous learner code. The nickname and the player gender are never in the payload, and there is a test that says so.
+
+---
+
 ### Project layout
 
 ```
@@ -283,6 +307,7 @@ quizon/
 │   ├── content/            # the manifest, passages, question bank, Zod schemas
 │   ├── logic/              # attempt state machine, scoring, adaptive selection
 │   ├── store/              # the persisted Zustand store
+│   ├── sync/               # the teacher sync: payload, queue, client, manager
 │   ├── lib/                # audio synthesis, back navigation, seeded random
 │   └── dev/                # /dev route index + state presets (DEV only)
 ├── images/                 # README icons and screenshots
@@ -312,11 +337,11 @@ Built to be usable by the whole class, not just the fast readers.
 | Property | Value |
 |----------|-------|
 | Strategy | `generateSW` via `vite-plugin-pwa`, `registerType: 'autoUpdate'` |
-| Precache | **49 entries, ~10 MB** (`**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2,ico}`) |
+| Precache | **50 entries, ~10 MB** (`**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2,ico}`) |
 | Navigation fallback | `/index.html` — deep links resolve with no network |
 | Runtime cache | `NetworkFirst` for documents, `CacheFirst` for fonts |
 | Stale cache | `cleanupOutdatedCaches: true` |
-| Data | `localStorage` only — no server, no sync, no accounts |
+| Data | `localStorage`, plus the optional one-way sync to the teacher's dashboard. No account, and nothing leaves the device unless a class code was entered |
 
 The precache budget matters: the reference app this project was modelled on shipped **142 MB** of lesson video. Replacing that with text rules, real examples and synthesized Web Audio effects brought the whole app to **~10 MB**, so a cheap Android phone precaches in seconds on school Wi-Fi.
 
@@ -374,10 +399,9 @@ npm run build      # -> dist/
 
 - [ ] Ship the PWA install icons the manifest already points at (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`) so the app installs with a proper home-screen icon
 - [ ] Add ESLint + Prettier configuration — the `lint` script is declared, the dependency is not installed yet
-- [ ] Teacher-facing roster view and CSV export, for classrooms that want to see more than one learner
 - [ ] More local passages, and a Filipino (Tagalog) narration layer for the passages and feedback
 - [ ] Text-to-speech read-aloud for passages, so pre-readers and screen-reader users get the same content
-- [ ] Optional teacher sync for classrooms that regain connectivity between sessions
+- [ ] Show the missed item TEXT on the teacher dashboard, not just the ids
 
 ---
 

@@ -1,0 +1,38 @@
+# Netlify build settings for the QuizOn! student PWA.
+#
+# The SPA REDIRECT is not optional. The app's router uses clean URLs
+# (/hub, /quiz/easy, /skill/purpose), so a hard refresh on any of them has to
+# serve index.html instead of a 404. Netlify only applies a redirect when no
+# real file matches, so the service worker, the assets and the manifest are
+# still served normally.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# THE SERVICE WORKER AND THE SHELL MUST NOT BE CACHED BY THE BROWSER.
+#
+# Without these, a learner keeps running the version of QuizOn! that was
+# live when their phone last opened it, and a deploy appears to do nothing.
+# The service worker updates itself (registerType: autoUpdate), but only if
+# it is allowed to be fetched again.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Hashed build assets are safe to cache forever.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

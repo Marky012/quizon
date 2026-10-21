@@ -10,7 +10,7 @@ import {
 } from '@/constants/gameConfig'
 import { SKILLS, SKILL_IDS, PUP_BY_SKILL } from '@/content/manifest'
 import { STORY_POOL_IDS } from '@/content/world'
-import { WORLD, type TierId } from '@/content/world'
+import { type TierId } from '@/content/world'
 import {
   appendHistory,
   assignStory,
@@ -29,6 +29,8 @@ import {
   type HelperGateState,
   type StudentReport,
 } from '@/logic/scoring'
+import type { SyncStatus } from '@/sync/types'
+import { normalizeClassCode } from '@/sync/classCode'
 
 /* ===========================================================================
    GAME STORE
@@ -214,6 +216,27 @@ export interface GameState {
   soundEnabled: boolean
   hapticsEnabled: boolean
   debugMode: boolean
+
+  /* ---------------------------------------------------------------------
+     THE CLASS LINK.
+
+     The teacher creates a class in the dashboard and gets a short code.
+     A learner types that code once, offline if necessary, and from then on
+     the device sends its progress to that class whenever it can reach the
+     network. The code is a DEVICE property, not a learner property: it stays
+     when the game is reset, because handing the device to the next pupil in
+     the same class must not mean re-typing it.
+     --------------------------------------------------------------------- */
+  classCode: string | null
+  /** When this device last sent its record successfully. */
+  lastSyncedAt: number | null
+  /**
+   * The live sync state. NOT persisted: it describes this moment, and a
+   * stale "synced" from last week would be a lie the moment the app opens.
+   */
+  syncStatus: SyncStatus
+  /** A short, grown-up-readable reason the last attempt failed. */
+  syncError: string | null
 }
 
 export interface GameActions {
@@ -287,7 +310,18 @@ export interface GameActions {
   resetGame: () => void
 
   getStudentReport: () => StudentReport
-  exportStudentData: () => string
+
+  /**
+   * Joins a class, or leaves it with null.
+   *
+   * The code is upper-cased and trimmed because it is read off a teacher's
+   * whiteboard and typed by a child on a phone keyboard, in either case.
+   */
+  setClassCode: (code: string | null) => void
+  /** Called by the sync manager, never by a screen. */
+  setSyncStatus: (status: SyncStatus, error?: string | null) => void
+  /** Called by the sync manager the moment the server accepts the record. */
+  markSynced: (at: number) => void
 }
 
 const initial: GameState = {
@@ -308,6 +342,10 @@ const initial: GameState = {
   soundEnabled: true,
   hapticsEnabled: true,
   debugMode: false,
+  classCode: null,
+  lastSyncedAt: null,
+  syncStatus: 'idle',
+  syncError: null,
 }
 
 export const useGameStore = create<GameState & GameActions>()(
@@ -572,6 +610,20 @@ export const useGameStore = create<GameState & GameActions>()(
       toggleHaptics: () => set((s) => ({ hapticsEnabled: !s.hapticsEnabled })),
       toggleDebug: () => set((s) => ({ debugMode: !s.debugMode })),
 
+      /**
+       * A fresh learner on this device.
+       *
+       * The CLASS LINK SURVIVES. The class code belongs to the device, not
+       * to the learner: a teacher hands the same tablet to the next pupil
+       * in the same class, and making that child re-type a code off a
+       * whiteboard is busywork the teacher did not ask for. The learner code
+       * IS regenerated, so the new learner is a new row on the dashboard.
+       *
+       * The last-synced time does NOT survive, because it belongs to the
+       * learner who has just been cleared off the device. Carrying it over
+       * would tell the next child that their teacher already has their
+       * work, which is not true.
+       */
       resetGame: () =>
         set({
           ...initial,
@@ -583,6 +635,8 @@ export const useGameStore = create<GameState & GameActions>()(
           skillMissedCount: {},
           history: [],
           lastEarnedSkillId: null,
+          classCode: get().classCode,
+          lastSyncedAt: null,
         }),
 
       getStudentReport: () => {
@@ -602,29 +656,28 @@ export const useGameStore = create<GameState & GameActions>()(
       },
 
       /**
-       * The ONE export implementation. The reference had a byte-identical
-       * dead copy in this store and a live copy inlined in a component; that
-       * duplication is gone.
+       * Joins or leaves a class.
+       *
+       * Leaving clears the link but NOT the last-synced time: the record
+       * that already reached the teacher stays on the teacher's dashboard,
+       * and the device remembers that it was last in touch with that class.
        */
-      exportStudentData: () => {
-        const s = get()
-        const report = s.getStudentReport()
-        return JSON.stringify(
-          {
-            exportVersion: 1,
-            app: WORLD.gameName,
-            exportDate: new Date().toISOString(),
-            learnerCode: s.learnerCode,
-            skills: s.skills,
-            tiers: s.tiers,
-            totals: s.totals,
-            skillMissedCount: s.skillMissedCount,
-            report,
-          },
-          null,
-          2,
-        )
+      setClassCode: (code) => {
+        const clean = code === null ? null : normalizeClassCode(code)
+        set({ classCode: clean && clean.length > 0 ? clean : null, syncError: null })
       },
+
+      setSyncStatus: (status, error) => set({ syncStatus: status, syncError: error ?? null }),
+
+      /**
+       * The server has the record.
+       *
+       * The timestamp goes in with the status on purpose. "Synced" without a
+       * time is a claim the learner cannot check, and this is the only
+       * evidence they get that their work arrived, so the two are written
+       * together or not at all.
+       */
+      markSynced: (at) => set({ syncStatus: 'synced', syncError: null, lastSyncedAt: at }),
     }),
     {
       name: STORAGE_KEY,
@@ -645,6 +698,10 @@ export const useGameStore = create<GameState & GameActions>()(
         history: s.history,
         soundEnabled: s.soundEnabled,
         hapticsEnabled: s.hapticsEnabled,
+        // The class link and the last successful sync survive a restart, so
+        // the device does not have to be told its class again every morning.
+        classCode: s.classCode,
+        lastSyncedAt: s.lastSyncedAt,
       }),
     },
   ),

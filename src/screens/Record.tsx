@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ScreenFrame, useBack } from '@/components/ScreenFrame'
 import { PupAvatar } from '@/components/PupAvatar'
 import { SkillSymbol } from '@/components/SkillSymbol'
+import { SyncBadge } from '@/components/SyncBadge'
 import { SKILLS } from '@/content/manifest'
 import { TIER_ORDER } from '@/content/world'
 import { attemptsLeft, bestScore, isPassing } from '@/logic/scoring'
@@ -52,17 +53,6 @@ export function Record() {
 
   const totalReview = Object.values(missed).reduce((a, b) => a + b, 0)
 
-  function doExport() {
-    const data = useGameStore.getState().exportStudentData()
-    const blob = new Blob([data], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `quizon-${useGameStore.getState().learnerCode}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   return (
     <ScreenFrame
       title="My reading record"
@@ -77,21 +67,15 @@ export function Record() {
           >
             Print
           </button>
-          <button
-            type="button"
-            onClick={doExport}
-            className="btn-chunky flex-1 bg-yellow py-4 text-indigo"
-          >
-            Save data
-          </button>
         </div>
       }
     >
       {/* Only on screen. Hidden before printing. */}
-      <div className="mb-4 flex items-center gap-3 no-print">
+      <div className="mb-4 flex flex-col gap-2 no-print">
         <p className="flex-1 text-[15px] leading-6 text-navy/80">
-          Print this page for your teacher, or save the data file.
+          Print this page for your teacher.
         </p>
+        <SyncBadge />
       </div>
 
       <table className="w-full border-collapse text-left">

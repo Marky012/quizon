@@ -1,9 +1,14 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ScreenFrame, useBack } from '@/components/ScreenFrame'
+import { SyncBadge } from '@/components/SyncBadge'
 import { play, setSoundEnabled } from '@/lib/audio'
 import { useReducedMotion } from '@/lib/useReducedMotion'
 import { WORLD } from '@/content/world'
 import { useGameStore } from '@/store/gameStore'
+import { formatClassCode, isValidClassCode, normalizeClassCode } from '@/sync/classCode'
+import { syncNow } from '@/sync/manager'
+import { syncConfigured } from '@/sync/client'
 
 /* ===========================================================================
    SETTINGS - reached from the gear button in the Hub header.
@@ -30,7 +35,30 @@ export function Settings() {
   const back = useBack()
   const soundEnabled = useGameStore((s) => s.soundEnabled)
   const toggleSound = useGameStore((s) => s.toggleSound)
+  const classCode = useGameStore((s) => s.classCode)
+  const setClassCode = useGameStore((s) => s.setClassCode)
   const reduced = useReducedMotion()
+  const [codeInput, setCodeInput] = useState('')
+
+  /* Whether this build can sync at all.
+     A build with no teacher dashboard attached must not show a class code
+     box: a learner who types a code into a screen that can never do
+     anything with it has been told a lie by the interface. */
+  const canSync = syncConfigured()
+
+  function joinClass() {
+    const code = normalizeClassCode(codeInput)
+    if (!isValidClassCode(code)) return
+    setClassCode(code)
+    setCodeInput('')
+    play('unlock')
+    void syncNow()
+  }
+
+  function leaveClass() {
+    setClassCode(null)
+    play('tap')
+  }
 
   return (
     <ScreenFrame title="Settings" onBack={back}>
@@ -75,6 +103,93 @@ export function Settings() {
               : 'Animation follows your device settings.'}
           </p>
         </li>
+
+        {/* THE CLASS LINK.
+
+            The teacher creates a class and gets a short code. The learner
+            types it once, here, and from then on the device sends its
+            record on its own whenever it can reach the network. No file, no
+            hand-off, nothing for a child to remember.
+
+            THE CODE CAN BE TYPED OFFLINE. It is six characters of text, so
+            it can be written on the board and copied in with no signal at
+            all. The record waits on the device and goes when the teacher
+            opens the hotspot. */}
+        {canSync && (
+          <li className="card-cream p-4">
+            <p className="font-display text-[19px] leading-6 text-indigo">Sync to your class</p>
+
+            {classCode === null ? (
+              <>
+                <p className="mt-1 text-[14px] leading-5 text-navy/80">
+                  Your teacher will give you a class code. Type it here and your teacher can see
+                  how you are doing. You can still play without a code.
+                </p>
+                <div className="mt-3 flex flex-col gap-2">
+                  <label htmlFor="class-code" className="text-[14px] text-navy/80">
+                    Class code
+                  </label>
+                  <input
+                    id="class-code"
+                    type="text"
+                    value={codeInput}
+                    onChange={(e) => setCodeInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && isValidClassCode(codeInput)) joinClass()
+                    }}
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    maxLength={7}
+                    enterKeyHint="done"
+                    aria-label="Class code from your teacher"
+                    placeholder="QZ-4821"
+                    className="w-full rounded-[14px] bg-cream px-4 py-3 font-display text-[22px] leading-7 text-indigo shadow-[inset_0_2px_0_0_rgba(26,43,76,0.1)] placeholder:text-indigo/35 focus:outline-3 focus:outline-[var(--color-focus)]"
+                  />
+                  <button
+                    type="button"
+                    onClick={joinClass}
+                    disabled={!isValidClassCode(codeInput)}
+                    className="btn-chunky w-full bg-turquoise py-3 text-on-turquoise"
+                  >
+                    Join class
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mt-1 text-[14px] leading-5 text-navy/80">
+                  This device sends its record to class{' '}
+                  <span className="font-bold text-indigo">{formatClassCode(classCode)}</span>.
+                </p>
+                <div className="mt-2">
+                  <SyncBadge />
+                </div>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      play('tap')
+                      void syncNow()
+                    }}
+                    className="btn-chunky flex-1 bg-yellow py-3 text-indigo"
+                  >
+                    Send now
+                  </button>
+                  <button
+                    type="button"
+                    onClick={leaveClass}
+                    className="btn-chunky flex-1 bg-white py-3 text-indigo"
+                    style={{ backgroundColor: 'var(--color-cream)' }}
+                  >
+                    Leave class
+                  </button>
+                </div>
+              </>
+            )}
+          </li>
+        )}
 
         {/* The learner code card that was here was removed 2026-10-05. The code
             is still generated and still used in the export filename and the
