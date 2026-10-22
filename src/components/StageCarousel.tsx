@@ -92,6 +92,12 @@ export function StageCarousel({
   const syncActive = useCallback(() => {
     const track = trackRef.current
     if (!track) return
+    /* A track with nothing to scroll (the lg row - see its classes) has no card
+       "nearest the centre" in any meaningful sense: the middle card is exactly
+       centred, so mount would land on card two and the Hub would open on Reading
+       Trail instead of Woof School. There, `active` is a selection owned by the
+       arrows and the dots, not a readout of scroll position. */
+    if (track.scrollWidth <= track.clientWidth) return
     const centre = track.scrollLeft + track.clientWidth / 2
     const cards = Array.from(track.querySelectorAll<HTMLElement>('[data-card]'))
     let best = 0
@@ -130,10 +136,17 @@ export function StageCarousel({
   }, [centreIndex, syncActive])
 
   /* The arrows scroll rather than set state, so the drag and the buttons can
-     never disagree about which card is showing. */
+     never disagree about which card is showing. The index is also set here
+     because at lg the three cards sit side by side with nothing to scroll (see
+     the track's classes), so scrolling alone would leave the arrows and the dots
+     inert. Setting the same index the scroll is about to report is harmless: the
+     scroll handler re-measures and agrees. */
   const go = (delta: number) => {
     const next = Math.min(cards.length - 1, Math.max(0, active + delta))
-    if (next !== active) centreIndex(next)
+    if (next !== active) {
+      setActive(next)
+      centreIndex(next)
+    }
   }
 
   return (
@@ -154,7 +167,6 @@ export function StageCarousel({
         style={
           {
             '--card-w': 'min(64vw, 244px)',
-            '--card-h': '380px',
           } as CSSProperties
         }
         /* FULL BLEED, AND `relative` IS LOAD-BEARING WITH IT.
@@ -179,8 +191,24 @@ export function StageCarousel({
 
            The px-4 that comes with it is redundant for centring (the end
            spacers already reserve exactly that room) but harmless, and it keeps
-           a sliver of track padding at the scroll ends. */
-        className="relative -mx-4 flex snap-x snap-mandatory items-center gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+           a sliver of track padding at the scroll ends.
+
+           AT lg THERE IS NO CAROUSEL, ONLY A ROW. Three 244px cards and two gaps
+           are 756px, so once the track is 864px wide there is nothing to scroll
+           and nothing to peek at - but the track still clipped at its own edge,
+           which on a 1440px screen is a hard vertical cut 270px in from the
+           right of the glass with bare backdrop beyond it. That is what "the
+           cards look cropped" was. So at lg the track stops being a scroller
+           (`overflow-visible`, no snap), drops the end spacers and centres its
+           three cards: all three fully visible, no cut, and the arrows and dots
+           still choose one (which now needs setActive - see go()).
+
+           --card-h is here rather than in the style object because it has to be
+           responsive: on a 1440x900 or 1024x768 laptop the 380px card plus the
+           header and the grass was taller than the glass, so the grass and the
+           pups' names fell below the fold. The vh-based clamp only applies from
+           lg, so the phone keeps its exact 380px card. */
+        className="relative -mx-4 flex snap-x snap-mandatory items-center gap-3 overflow-x-auto px-4 pb-1 [--card-h:380px] [scrollbar-width:none] lg:snap-none lg:justify-center lg:overflow-visible lg:[--card-h:clamp(260px,34vh,380px)] [&::-webkit-scrollbar]:hidden"
       >
         {/* Half-a-viewport spacers at both ends, and they are load-bearing.
 
@@ -191,7 +219,7 @@ export function StageCarousel({
             somewhere to go at each end. */}
         <li
           aria-hidden="true"
-          className="shrink-0 snap-align-none"
+          className="shrink-0 snap-align-none lg:hidden"
           style={{ width: 'calc((100% - var(--card-w)) / 2)' }}
         />
 
@@ -226,17 +254,20 @@ export function StageCarousel({
             <li
               key={card.id}
               data-card
-              className="shrink-0 snap-center transition-[transform,opacity] duration-300 ease-out"
+              data-active={isActive ? 'true' : undefined}
               /* Scale and fade together, driven by one boolean, so the two can
                  never drift apart and the active card is the only thing that
-                 decides either. */
-              style={
-                {
-                  width: 'var(--card-w)',
-                  opacity: isActive ? 1 : 0.45,
-                  transform: `scale(${isActive ? 1 : 0.82})`,
-                } as CSSProperties
-              }
+                 decides either.
+
+                 AT lg THE LADDER IS OFF. It exists to make one card "the chosen
+                 one" when the other two are only slivers at the edges of a
+                 phone. In the desktop row all three are fully visible and
+                 equally tappable, and dimming two of them to 45% over a bright
+                 sky made their blurbs hard to read and made the row look
+                 half-loaded. lg:scale-100 must come after scale-[0.82] in the
+                 cascade - Tailwind emits media variants last, so it does. */
+              className="shrink-0 snap-center opacity-45 scale-[0.82] transition-[transform,opacity] duration-300 ease-out data-[active=true]:scale-100 data-[active=true]:opacity-100 lg:scale-100 lg:opacity-100"
+              style={{ width: 'var(--card-w)' }}
             >
               {/* THE LABEL SITS ON TOP OF THE CARD, NOT INSIDE IT. It is a
                   sibling of the button rather than its first child, so the card
@@ -370,7 +401,7 @@ export function StageCarousel({
         {/* Mirror spacer, so the LAST card can reach the middle too. */}
         <li
           aria-hidden="true"
-          className="shrink-0 snap-align-none"
+          className="shrink-0 snap-align-none lg:hidden"
           style={{ width: 'calc((100% - var(--card-w)) / 2)' }}
         />
       </ul>
@@ -399,8 +430,12 @@ export function StageCarousel({
           element on this screen uses, so the arrows were the only thing breaking
           the page's spacing rhythm. 24px keeps them out toward the corners where
           a thumb lands, while reading as deliberate margin rather than a control
-          jammed against the glass. */}
-      <div className="-mx-4 mt-3 flex items-center justify-between px-6">
+          jammed against the glass.
+
+          HIDDEN AT lg. The arrows exist because a phone shows one card at a
+          time; the desktop row shows all three, each one a tappable button, so
+          there is nothing left for the arrows or the dots to do. */}
+      <div className="-mx-4 mt-3 flex items-center justify-between px-6 lg:hidden">
         <Arrow direction="left" disabled={active === 0} onClick={() => go(-1)} />
         <StepIndicator
           index={active}
@@ -408,7 +443,10 @@ export function StageCarousel({
           label="Hub stages"
           stepLabels={cards.map((c) => c.label)}
           onSelect={(i) => {
-            if (i !== active) centreIndex(i)
+            if (i !== active) {
+              setActive(i)
+              centreIndex(i)
+            }
           }}
         />
         <Arrow direction="right" disabled={active === cards.length - 1} onClick={() => go(1)} />

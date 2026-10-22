@@ -126,7 +126,15 @@ export function PupBench() {
        inside it. */
     <section
       aria-label="Your pups"
-      className="relative mx-auto mt-16 w-full max-w-4xl select-none"
+      /* THE GRASS WIDTH IS ALSO ITS HEIGHT. The image keeps its aspect ratio, so
+         capping the container at max-w-4xl was really a 380px-tall cap - taller
+         than a 1024x768 laptop has room for once the header and the carousel are
+         placed. Tying the width to the viewport height (80vh => 614px wide and
+         260px tall at 768) shrinks the whole bench proportionally instead of
+         cropping it, so the dogs keep standing on the same blades at every size.
+         Only from lg: on a phone the grass is the page's last surface and the
+         page scrolls to it. */
+      className="relative mx-auto mt-16 w-full max-w-4xl select-none lg:mt-2 lg:w-[min(896px,80vh)]"
     >
       <img
         src="/assets/world/grass.png"

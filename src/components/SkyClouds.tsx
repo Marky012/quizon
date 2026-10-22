@@ -59,7 +59,12 @@ export function SkyClouds({ count = 4 }: { count?: number }) {
         return {
           src: CLOUD_IMAGES[Math.random() > 0.5 ? 1 : 0]!,
           top: `${Math.round(rand(2, 26))}%`,
-          width: `${Math.round(rand(30, 60))}vw`,
+          /* vw alone made the desktop sky wrong: 60vw of a 1920px monitor is a
+             1150px cloud, so one cloud covered half the sky and read as weather
+             rather than scenery. The pixel cap leaves the phone exactly as it
+             was (60vw of 360 is 216px) and only bites where a percentage stops
+             describing a cloud. */
+          width: `min(${Math.round(rand(30, 60))}vw, 340px)`,
           opacity: Math.round(rand(40, 70)) / 100,
           speed: Math.round(rand(10, 26)),
           reverse,

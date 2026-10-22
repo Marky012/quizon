@@ -133,7 +133,16 @@ export function Hub() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    /* ONE SCREEN ON A LAPTOP. On a phone the page is allowed to be taller than
+       the glass - the carousel is 380px and the grass is a footer you scroll to.
+       At lg the same stack measured 1056px, so on every common laptop (768, 800,
+       900 tall) the grass and the pups' names sat BELOW THE FOLD: the footer was
+       sliced by the window edge and the spotlighted name, which is the whole
+       point of the bench, could not be seen at all. Fixing the height to the
+       glass and letting main flex (below) puts the grass on the bottom edge and
+       keeps the names in view; the card and grass shrink to fit - see
+       StageCarousel's --card-h and PupBench's lg width. */
+    <div className="flex min-h-dvh flex-col lg:h-dvh">
       {/* --- Header: logo left, wordmark centred, settings right -------------
            NO SURFACE. This used to be an opaque cream bar with a navy rule and a
            turquoise shadow, which read as a second toolbar stacked over the app
