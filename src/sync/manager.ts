@@ -74,6 +74,7 @@ function currentSignature(): string | null {
   if (!s.classCode) return null
   return progressSignature({
     learnerCode: s.learnerCode,
+    fullName: s.playerFullName,
     skills: s.skills,
     tiers: s.tiers,
     totals: s.totals,
@@ -88,6 +89,10 @@ function currentPayload(now: number): SyncPayload | null {
   return buildSyncPayload({
     classCode: s.classCode,
     learnerCode: s.learnerCode,
+    /* The official name. The nickname is deliberately NOT here: the payload
+       is built from named fields, so a field that is not passed cannot
+       travel by accident. */
+    fullName: s.playerFullName,
     deviceId: getDeviceId(),
     skills: s.skills,
     tiers: s.tiers,
@@ -225,7 +230,13 @@ export function startSync(opts: SyncOptions = {}): void {
   let lastSignature = currentSignature()
   useGameStore.subscribe((s) => {
     if (!s.classCode) return
-    const signature = progressSignature({ learnerCode: s.learnerCode, skills: s.skills, tiers: s.tiers, totals: s.totals })
+    const signature = progressSignature({
+      learnerCode: s.learnerCode,
+      fullName: s.playerFullName,
+      skills: s.skills,
+      tiers: s.tiers,
+      totals: s.totals,
+    })
     if (signature === lastSignature) return
     lastSignature = signature
     schedule()

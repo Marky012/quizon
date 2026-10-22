@@ -26,7 +26,21 @@ import { useGameStore } from '@/store/gameStore'
    router, and asserts where a learner actually ends up. No @testing-library,
    same as appBack.test.tsx: React 19 ships act(), and createRoot is all that
    is needed to mount a router and press real buttons.
+
+   THE WARM-UP IS STUBBED, and that stub is the point of the stub. Boot used to
+   be a pure redirector, so a routing assertion could be made in a single
+   settle(). It is now a loading screen that warms the app up before it
+   redirects, which means a routing assertion needs the warm-up to finish
+   first. This file is about WHERE a learner ends up, not about how long the
+   warm-up takes - that is Boot.test.tsx's job - so the warm-up here resolves
+   immediately and the routing is what is under test.
    =========================================================================== */
+
+vi.mock('@/lib/preload', () => ({
+  isWarmupDone: () => false,
+  subscribeWarmup: () => () => {},
+  startWarmup: () => Promise.resolve(),
+}))
 
 let container: HTMLDivElement
 let root: Root
@@ -128,7 +142,7 @@ describe('the first-run spine, end to end', () => {
     await settle()
     expect(currentPath).toBe('/welcome')
 
-    await tap("Let's start!")
+    await tap('Start the quest!')
     await tick()
     await settle()
     expect(currentPath).toBe('/profile')
@@ -140,15 +154,39 @@ describe('the first-run spine, end to end', () => {
     await settle()
     expect(currentPath).toBe('/profile')
 
+    // PANEL 2 IS THE OFFICIAL NAME, and the button stays disabled until
+    // there are two words - a single word does not identify a child in a
+    // class of thirty, which is the whole reason the field is asked for.
+    const fullName = container.querySelector<HTMLInputElement>('#full-name')
+    expect(fullName, 'panel 2 should be showing the full name field').toBeTruthy()
+    const nextButton = () =>
+      [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+        (b) => b.textContent?.trim() === 'Next',
+      )!
+
+    await type(fullName!, 'Maria')
+    expect(nextButton().disabled, 'one word is not a full name').toBe(true)
+
+    await type(fullName!, ' Maria Santos Reyes')
+    expect(nextButton().disabled, 'two words is a full name').toBe(false)
+
+    await tap('Next')
+    await tick()
+    await settle()
+    expect(currentPath).toBe('/profile')
+
     const nickname = container.querySelector<HTMLInputElement>('#nickname')
-    expect(nickname, 'panel 2 should be showing the nickname field').toBeTruthy()
+    expect(nickname, 'panel 3 should be showing the nickname field').toBeTruthy()
+    // It is pre-filled with the first name, so the common case is one tap.
+    expect(nickname!.value).toBe('Maria')
     await type(nickname!, 'Mia')
     await tap("Let's go!")
     await settle()
     expect(currentPath).toBe('/intro')
     expect(useGameStore.getState().profileCreated).toBe(true)
     expect(useGameStore.getState().playerGender).toBe('girl')
-    expect(useGameStore.getState().playerName).toBe('Mia')
+    expect(useGameStore.getState().playerFullName).toBe('Maria Santos Reyes')
+    expect(useGameStore.getState().playerNickname).toBe('Mia')
 
     await tap('Skip')
     await settle()

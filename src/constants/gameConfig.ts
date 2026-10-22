@@ -33,6 +33,21 @@ export const ANSWER_FEEDBACK_DELAY = 2000
 /** Ring-buffer cap on adaptive answer history. */
 export const QUESTION_HISTORY_LIMIT = 200
 
+/* --- The two names --------------------------------------------------------
+   THE OFFICIAL NAME and THE IN-GAME ALIAS are different fields with
+   different rules, and both caps are enforced by the store rather than only
+   by the input, so a value arriving from anywhere else is trimmed too.
+
+   The official name is generous: "Maria Santos Reyes" is 17 characters, and
+   Filipino names with a middle name run longer than that. 60 is room for
+   "Juanito Santos dela Cruz Jr." and still short enough to live in one
+   database column and one dashboard cell.
+
+   The alias is short on purpose. It is a nickname: it fits on a badge, in a
+   greeting, and on a line of a report, and a long one defeats all three. */
+export const MAX_FULL_NAME = 60
+export const MAX_NICKNAME = 12
+
 /* --- Tiers are DATA, not a union type baked into the store. --------------
    The reference project hardcoded easy/medium/hard in four separate places
    (the store's type, getStudentReport's indexes [0][1][2], the difficulty

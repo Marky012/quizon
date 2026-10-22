@@ -1,5 +1,6 @@
 ﻿import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
+import { StepIndicator } from '@/components/StepIndicator'
 import { useReducedMotion } from '@/lib/useReducedMotion'
 
 /* ===========================================================================
@@ -382,12 +383,18 @@ export function StageCarousel({
           row runs the full width of the screen, with a 3px inset so neither
           arrow is flush against the bezel where it would be easy to miss.
 
-          The counter stays centred because both arrows are the same width, so
+          The counter in the middle was the words "1 of 3" and it is now the
+          STEP INDICATOR - the same component the Intro uses, so the two
+          screens answer "where am I" the same way. It is also a control: its
+          dots jump straight to a stage, which is a much bigger target than
+          the arrows for a child who has not yet learned to swipe.
+
+          The row stays centred because both arrows are the same width, so
           justify-between leaves it exactly in the middle.
 
           THE INSET IS 24px, and that is a correction. This row went full-bleed
-          with 12px of breathing room first, which put the arrows close enough to
-          the bezel to look accidental - reachable, but visually crowding the
+          with 12px of breathing room first, which put the arrows close enough
+          to the bezel to look accidental - reachable, but visually crowding the
           edge of the screen. 12px is also narrower than the 16px every other
           element on this screen uses, so the arrows were the only thing breaking
           the page's spacing rhythm. 24px keeps them out toward the corners where
@@ -395,9 +402,16 @@ export function StageCarousel({
           jammed against the glass. */}
       <div className="-mx-4 mt-3 flex items-center justify-between px-6">
         <Arrow direction="left" disabled={active === 0} onClick={() => go(-1)} />
-        <span className="text-sm text-navy">
-          {active + 1} of {cards.length}
-        </span>
+        <StepIndicator
+          index={active}
+          total={cards.length}
+          label="Hub stages"
+          stepLabels={cards.map((c) => c.label)}
+          onSelect={(i) => {
+            if (i !== active) centreIndex(i)
+          }}
+          className="w-[150px] sm:w-[190px]"
+        />
         <Arrow direction="right" disabled={active === cards.length - 1} onClick={() => go(1)} />
       </div>
     </div>

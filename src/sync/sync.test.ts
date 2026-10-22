@@ -10,9 +10,11 @@ import { useGameStore } from '@/store/gameStore'
 
    Three things have to be true for this feature to be worth shipping:
 
-     1. THE NICKNAME NEVER LEAVES. The learner code is the only identifier
-        that travels. This is a privacy rule, and a privacy rule that is not
-        tested is a wish.
+     1. THE NICKNAME NEVER LEAVES, AND THE FULL NAME DOES. One is the
+        in-game alias and the other is the official record, and the wire
+        carries exactly one of them. A privacy rule that is not tested is a
+        wish, and so is a rule that says "no names" when the product has
+        since decided a teacher's roster needs one.
      2. A FAILURE NEVER COSTS THE LEARNER THEIR WORK. The pending slot
         survives an error, and a full payload means the next attempt is
         enough.
@@ -39,6 +41,7 @@ function samplePayload(overrides: Partial<Parameters<typeof buildSyncPayload>[0]
   return buildSyncPayload({
     classCode: 'QZ4821',
     learnerCode: 'AB-12',
+    fullName: 'Maria Santos Reyes',
     deviceId: 'device-1',
     skills: [],
     tiers: {},
@@ -57,12 +60,22 @@ describe('the sync payload', () => {
     expect(payload.classCode).toBe('QZ4821')
     expect(payload.learnerCode).toBe('AB-12')
     expect(payload.deviceId).toBe('device-1')
-    expect(payload.schemaVersion).toBe(1)
+    expect(payload.schemaVersion).toBe(2)
+  })
+
+  /* THE OFFICIAL NAME TRAVELS. This is the one human identifier in the
+     document, and it is here because a teacher has to be able to put a face
+     to a row. The name is cleaned up on the way out, so a phone keyboard's
+     double spaces do not create two different names. */
+  it('carries the official full name, cleaned up', () => {
+    const payload = samplePayload({ fullName: '  Maria   Santos  Reyes  ' })
+    expect(payload.fullName).toBe('Maria Santos Reyes')
   })
 
   it('never carries a nickname, because there is no nickname in the input', () => {
     const payload = samplePayload()
     expect(JSON.stringify(payload)).not.toContain('Mia')
+    expect(Object.keys(payload)).not.toContain('playerNickname')
     expect(Object.keys(payload)).not.toContain('playerName')
     expect(Object.keys(payload)).not.toContain('playerGender')
   })
@@ -108,6 +121,7 @@ describe('the sync payload', () => {
 describe('the progress signature', () => {
   const base = {
     learnerCode: 'AB-12',
+    fullName: 'Maria Santos Reyes',
     skills: [{ id: 'text-type', lessonComplete: false, pupEarned: false, pupUses: 0, bestPreTestScore: 0 }],
     tiers: { easy: { attempts: 0, bestScore: 0, needsAttention: false, hintUsed: false, storyId: null } },
     totals: { correct: 0, incorrect: 0 },
@@ -140,6 +154,16 @@ describe('the progress signature', () => {
       ...base,
       tiers: { easy: { ...base.tiers.easy!, attempts: 1, bestScore: 80 } },
     })
+    expect(after).not.toBe(before)
+  })
+
+  it('moves when the official NAME changes, so the dashboard gets the name', () => {
+    // The record on the dashboard is identified by the name, so a change to
+    // it has to be worth an upload. Without this, a device that synced
+    // before the learner had typed their name would decide there was
+    // "nothing new to send" and the teacher would never see the name.
+    const before = progressSignature(base)
+    const after = progressSignature({ ...base, fullName: 'Maria Santos Dela Cruz' })
     expect(after).not.toBe(before)
   })
 

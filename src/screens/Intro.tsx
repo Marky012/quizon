@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ScreenFrame } from '@/components/ScreenFrame'
 import { PupAvatar } from '@/components/PupAvatar'
+import { StepIndicator } from '@/components/StepIndicator'
 import { PUP_BY_ID, SKILLS } from '@/content/manifest'
 import { WORLD } from '@/content/world'
 import { play } from '@/lib/audio'
@@ -54,7 +55,10 @@ export function Intro() {
   return (
     <ScreenFrame
       title="Before you start"
-      subtitle={`Panel ${panel + 1} of ${total}`}
+      /* NO SUBTITLE. It used to say "Panel 2 of 3", and the indicator below
+         now says the same thing with a bar and three dots instead of three
+         words. Saying it twice is noise, and the indicator is the one a
+         child can read at a glance. */
       onBack={panel === 0 ? undefined : () => setPanel(panel - 1)}
       headerRight={
         <button
@@ -96,21 +100,26 @@ export function Intro() {
         )}
       </div>
 
-      <ol className="mt-6 flex justify-center gap-2" aria-label="Story panels">
-        {WORLD.intro.map((p, i) => (
-          <li key={p.title}>
-            <button
-              type="button"
-              onClick={() => setPanel(i)}
-              aria-label={`Go to panel ${i + 1}: ${p.title}`}
-              aria-current={i === panel}
-              className={`h-4 w-4 rounded-full shadow-[inset_0_-3px_0_0_rgb(26_43_76/0.12)] ${
-                i === panel ? 'bg-turquoise' : 'bg-indigo-soft'
-              }`}
-            />
-          </li>
-        ))}
-      </ol>
+      {/* THE PROGRESS INDICATOR. It replaced a row of plain dots on
+          2026-10-22, and it is the same component the Hub's carousel uses, so
+          the two screens cannot drift apart. The bar says how far through the
+          story you are and the dots on it say which panel you are on.
+
+          The dots are still buttons and they still jump straight to a panel -
+          the visible dot is 14px but the button around it is 44px, because a
+          child aiming at a 14px target on a phone in bright light is aiming
+          at the wrong thing. */}
+      <StepIndicator
+        index={panel}
+        total={total}
+        label="Story panels"
+        stepLabels={WORLD.intro.map((p) => p.title)}
+        onSelect={(i) => {
+          play('tap')
+          setPanel(i)
+        }}
+        className="mt-6"
+      />
 
       <p className="mt-6 text-center text-sm text-navy/80">
         {SKILLS.length} helpers, eight reading skills, three places to visit.

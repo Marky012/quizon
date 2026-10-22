@@ -222,42 +222,52 @@ describe('player profile', () => {
   it('starts uncreated, so Boot sends a started learner to /profile', () => {
     useGameStore.getState().startGame()
     expect(useGameStore.getState().profileCreated).toBe(false)
-    expect(useGameStore.getState().playerName).toBe('')
+    expect(useGameStore.getState().playerFullName).toBe('')
+    expect(useGameStore.getState().playerNickname).toBe('')
   })
 
-  it('createProfile stores the gender and a trimmed nickname, once', () => {
-    useGameStore.getState().createProfile('boy', '  J R   ')
+  it('createProfile stores the gender, the official name and the alias', () => {
+    useGameStore.getState().createProfile('boy', '  Juan   Dela Cruz ', ' JD ')
 
     const s = useGameStore.getState()
     expect(s.playerGender).toBe('boy')
-    expect(s.playerName).toBe('J R')
+    expect(s.playerFullName).toBe('Juan Dela Cruz')
+    expect(s.playerNickname).toBe('JD')
     expect(s.profileCreated).toBe(true)
 
     // A second call overwrites; nothing re-creates the gate.
-    useGameStore.getState().createProfile('girl', 'Mia')
+    useGameStore.getState().createProfile('girl', 'Maria Santos Reyes', 'Mia')
     expect(useGameStore.getState().playerGender).toBe('girl')
-    expect(useGameStore.getState().playerName).toBe('Mia')
+    expect(useGameStore.getState().playerFullName).toBe('Maria Santos Reyes')
+    expect(useGameStore.getState().playerNickname).toBe('Mia')
   })
 
-  it('caps the nickname at 12 characters so the UI cannot overflow', () => {
-    useGameStore.getState().createProfile('girl', 'X'.repeat(40))
-    expect(useGameStore.getState().playerName.length).toBe(12)
+  it('caps the alias at 12 characters so the UI cannot overflow', () => {
+    useGameStore.getState().createProfile('girl', 'Maria Santos Reyes', 'X'.repeat(40))
+    expect(useGameStore.getState().playerNickname.length).toBe(12)
+  })
+
+  it('caps the official name, so a pasted novel cannot land in a dashboard cell', () => {
+    useGameStore.getState().createProfile('girl', 'X'.repeat(200), 'Mia')
+    expect(useGameStore.getState().playerFullName.length).toBe(60)
   })
 
   it('resetGame clears the profile (fresh start)', () => {
-    useGameStore.getState().createProfile('boy', 'Gab')
+    useGameStore.getState().createProfile('boy', 'Gab Ramos', 'Gab')
     useGameStore.getState().resetGame()
     const s = useGameStore.getState()
     expect(s.profileCreated).toBe(false)
-    expect(s.playerName).toBe('')
+    expect(s.playerFullName).toBe('')
+    expect(s.playerNickname).toBe('')
   })
 
-  it('never puts the nickname into the teacher report or the synced payload', () => {
-    useGameStore.getState().createProfile('girl', 'Mia')
+  it('never puts the ALIAS into the teacher report or the synced payload', () => {
+    useGameStore.getState().createProfile('girl', 'Maria Santos Reyes', 'Mia')
     const report = useGameStore.getState().getStudentReport()
     const payload = buildSyncPayload({
       classCode: 'QZ4821',
       learnerCode: useGameStore.getState().learnerCode,
+      fullName: useGameStore.getState().playerFullName,
       deviceId: 'device-1',
       skills: useGameStore.getState().skills,
       tiers: useGameStore.getState().tiers,
@@ -269,8 +279,10 @@ describe('player profile', () => {
     })
     expect(JSON.stringify(report)).not.toContain('Mia')
     expect(JSON.stringify(payload)).not.toContain('Mia')
-    // The payload pins the anonymous learner code, not a name.
+    // The payload pins the anonymous learner code as well as the name.
     expect(payload.learnerCode).toBe(useGameStore.getState().learnerCode)
+    // And the official name IS there, because the teacher needs it.
+    expect(payload.fullName).toBe('Maria Santos Reyes')
   })
 })
 

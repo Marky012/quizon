@@ -22,10 +22,10 @@ import type { StudentReport } from '@/logic/scoring'
 
    WHAT IS NOT IN HERE, AND WHY.
 
-     - The learner's NICKNAME. It is display-only in the game, and it must
-       stay that way all the way to the server. The learner code is the only
-       identifier that travels. A test asserts the nickname never appears in
-       the payload.
+     - The learner's NICKNAME. It is the in-game alias, chosen by a child,
+       often a joke, and not a legal name. It is display-only in the game and
+       it stays that way all the way to the server. A test asserts the
+       nickname never appears in the payload.
      - The learner's GENDER. It is stored, it is used to pick the player
        avatar, and it is nobody's business on a dashboard that exists to
        measure reading.
@@ -34,6 +34,27 @@ import type { StudentReport } from '@/logic/scoring'
        that is what travels, deduped and capped. See buildSyncPayload.
      - Preferences and debug flags. Nobody grades a learner on their sound
        setting.
+
+   AND THE ONE NAME THAT DOES TRAVEL.
+
+     THE FULL NAME does, and it is the only exception to the rule this file
+     used to state outright. Before 2026-10-22 the app held one name, sent
+     none of it, and identified a learner only by the anonymous learner code
+     - which is right for privacy and useless for teaching, because a teacher
+     looking at "BAL-47" cannot put a face to it.
+
+     So the app now holds TWO names, and this contract carries exactly one of
+     them:
+
+       fullName        the official record. Travels. The teacher dashboard
+                       shows it as the roster's headline.
+       (nickname)      the in-game alias. Does NOT travel. See above.
+
+   That is a deliberate, narrow reversal of a deliberate, narrow rule. If you
+   are reading this to add a THIRD name, read the section above first: the
+   question to ask is not "is it useful on the dashboard" but "is this a legal
+   name of a real child", and only one of the two names in the app passes
+   that.
    =========================================================================== */
 
 export const SYNC_APP = 'QuizOn!'
@@ -42,8 +63,10 @@ export const SYNC_APP = 'QuizOn!'
  * Bump when the payload shape changes in a way the server must know about.
  * The server stores it and can refuse a version it does not understand,
  * instead of silently mis-reading a field.
+ *
+ * VERSION 2, 2026-10-22: added `fullName`. The official name travels.
  */
-export const SYNC_SCHEMA_VERSION = 1
+export const SYNC_SCHEMA_VERSION = 2
 
 export interface SyncSkill {
   id: string
@@ -69,8 +92,20 @@ export interface SyncPayload {
   schemaVersion: number
   /** The class the teacher gave out. The capability token for this upload. */
   classCode: string
-  /** The anonymous learner code. The only identifier that travels. */
+  /** The anonymous learner code. The machine identifier. */
   learnerCode: string
+  /**
+   * THE OFFICIAL NAME, and the only human identifier in this document.
+   *
+   * This is the name on the attendance sheet, and it is here because a
+   * teacher has to be able to say "Maria Santos Reyes sat on the Maunahan"
+   * without guessing from a code. The in-game NICKNAME is not here and must
+   * never be added: a nickname is a child's joke, not a legal name.
+   *
+   * It is empty on a record built by a build from before the full name
+   * existed, and the dashboard falls back to the learner code in that case.
+   */
+  fullName: string
   /**
    * A stable id for THIS browser install. Two devices with the same learner
    * code are two rows, not one, because they are two different devices with

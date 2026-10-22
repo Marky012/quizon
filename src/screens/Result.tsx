@@ -80,6 +80,9 @@ export function Result() {
 
   const state = useGameStore((s) => (tierId ? s.tiers[tierId] : undefined))
   const missed = useGameStore((s) => s.skillMissedCount)
+  /* The in-game alias. The full name is on the teacher's dashboard; this is
+     the only name the game ever says out loud. */
+  const nickname = useGameStore((s) => s.playerNickname)
 
   /* The celebration fires here and ONLY here.
      Quiz used to play it too as it navigated here, so passing a level played the
@@ -154,6 +157,26 @@ export function Result() {
       <div className="flex flex-col gap-4">
         {/* Indigo hero band. */}
         <section className="rounded-[24px] bg-indigo p-5 text-center text-cream shadow-[0_20px_34px_-20px_rgb(26_35_126/0.7)]">
+          {/* THE NICKNAME, and this is where the in-game alias earns its
+              place. The full name lives on the teacher's dashboard and never
+              appears in the game; the nickname is the name the app uses when
+              it talks TO the learner, and the result screen is the moment
+              that matters most - it is the one screen where the app is
+              congratulating someone by name.
+
+              IT IS THE NICKNAME and not the full name, deliberately. A game
+              that says "Well done, Maria Santos Reyes" is reading a legal
+              name off a screen; a game that says "Well done, Mia" is talking
+              to a person.
+
+              AND IT ONLY APPEARS ON A PASS. The hero band is the same band
+              that shows "You needed 70%" on a failed attempt, and "Well
+              done" above a failure is a lie the learner would read before
+              they read the score. Teacher Reyes gets the failed attempt
+              instead - warmly, and without the word "done". */}
+          {passed && nickname && (
+            <p className="font-display text-[22px] leading-7 text-turquoise">Well done, {nickname}!</p>
+          )}
           <p className="font-display text-[44px] leading-12 tabular-nums">
             {Math.round(score / 5) * 5}
             <span className="text-[24px]">%</span>

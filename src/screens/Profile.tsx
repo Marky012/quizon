@@ -3,31 +3,56 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { ScreenFrame } from '@/components/ScreenFrame'
 import { play } from '@/lib/audio'
 import { useAppBack } from '@/lib/appBack'
+import { MAX_FULL_NAME, MAX_NICKNAME } from '@/constants/gameConfig'
 import { useGameStore, type PlayerGender } from '@/store/gameStore'
 
 /* ===========================================================================
-   PROFILE - the pupil chooses WHO they are and WHAT they are called, once,
-   before the intro. Standard games put character-gender before naming, and so
-   does this screen: panel 0 picks the player (girl/boy), panel 1 asks for a
-   nickname and shows the chosen player so the name has a face.
+   PROFILE - the pupil chooses WHO they are, WHAT they are called officially,
+   and WHAT the game calls them. Once, before the intro.
 
-   TWO COLUMNS, TWO PANELS. The two characters are side by side and need no
-   reading to pick (a child who cannot read the word "girl" still recognises
-   the picture). The nickname is a real text field, so it is the second, warm
-   step - the harder action happens after the easy one, and the chosen avatar
-   sits right above the field.
+   THREE PANELS, THREE JOBS, and the order is the order of the questions:
+   which character, then the official name, then the nickname. The easy
+   no-reading choice comes first, and the two typing steps come after it, so
+   a child who cannot read "girl" still recognises the picture and can get
+   past the first screen.
 
-   PRIVACY STAYS. playerName is display-only: the store deliberately does not
-   export it to the teacher report (see createProfile in gameStore.ts), so the
-   learner-code anonymity posture survives a feature that now knows a name.
+   TWO NAMES, AND THEY ARE NOT THE SAME THING. This is the important part of
+   the screen, so it is worth being blunt about it:
+
+     THE FULL NAME is the official record. It is the name on the attendance
+     sheet, the one the teacher reads off the dashboard and matches to a face
+     in the classroom. It travels to the teacher dashboard and nowhere else.
+
+     THE NICKNAME is the in-game alias. It is what the app calls the learner
+     while they play. It NEVER leaves the device: the sync payload is built
+     without it and a test asserts its absence.
+
+   Before 2026-10-22 this screen asked for ONE name and refused to send it
+   anywhere, because the app's original privacy posture was that no name ever
+   travels and the anonymous learner code was the only identifier. That
+   posture is unchanged for the nickname and for everything else in the
+   record - the full name is the one deliberate exception, and it was made
+   because a teacher cannot act on "BAL-47".
+
+   THE FULL NAME NEEDS AT LEAST TWO WORDS. A single first name does not
+   identify a child in a class of thirty, which is the whole point of asking,
+   so the button stays disabled until there is a first name AND a last name.
+   The hint under the field says so before the child types anything.
+
+   THE NICKNAME IS PRE-FILLED with the first name, so the common case is one
+   tap on "Let's go!" and the child never has to think about it. Clearing it
+   falls back to the first name rather than leaving the learner nameless.
    =========================================================================== */
-
-export const MAX_NICKNAME = 12
 
 const CHARACTERS: ReadonlyArray<{ id: PlayerGender; label: string; src: string }> = [
   { id: 'girl', label: 'Girl', src: '/assets/players/girl.svg' },
   { id: 'boy', label: 'Boy', src: '/assets/players/boy.svg' },
 ]
+
+/** First name and last name. A single word is not an identification. */
+function words(value: string): string[] {
+  return value.trim().split(/\s+/).filter(Boolean)
+}
 
 export function Profile() {
   const navigate = useNavigate()
@@ -37,8 +62,9 @@ export function Profile() {
   const profileCreated = useGameStore((s) => s.profileCreated)
 
   const [gender, setGender] = useState<PlayerGender | null>(null)
-  const [name, setName] = useState('')
-  const [panel, setPanel] = useState<0 | 1>(0)
+  const [fullName, setFullName] = useState('')
+  const [nickname, setNickname] = useState('')
+  const [panel, setPanel] = useState<0 | 1 | 2>(0)
 
   /* One-way door, mirroring Boot exactly: Profile is the current step only when
      the learner has started and has not yet made a profile. Either condition
@@ -47,35 +73,69 @@ export function Profile() {
   if (!hasStarted || profileCreated) return <Navigate to="/" replace />
 
   const chosen = CHARACTERS.find((c) => c.id === gender)
-  const readyToName = gender !== null
-  const nameReady = name.trim().length > 0
+  const nameParts = words(fullName)
+  const fullNameReady = nameParts.length >= 2
+  const firstName = nameParts[0] ?? ''
+  /* The nickname falls back to the first name, so the learner can never end
+     up with nothing to be called. */
+  const finalNickname = nickname.trim() || firstName
+  const nicknameReady = finalNickname.length > 0
 
   /* A short beat so the tap that picked a character is felt before the panel
      swaps - the same 220ms feedback Welcome uses when its big button fires. */
-  function toName() {
+  function toFullName() {
     if (!gender) return
     play('tap')
     window.setTimeout(() => setPanel(1), 220)
   }
 
+  function toNickname() {
+    if (!fullNameReady) return
+    play('tap')
+    /* Pre-fill with the first name. The child can shorten it to "Mia" or
+       leave it as "Maria" - both are one tap away from done. */
+    setNickname((n) => n || firstName)
+    window.setTimeout(() => setPanel(2), 220)
+  }
+
   function confirm() {
-    if (!gender || !nameReady) return
+    if (!gender || !fullNameReady || !nicknameReady) return
     play('unlock')
-    createProfile(gender, name)
+    createProfile(gender, fullName, finalNickname)
     navigate('/intro')
   }
 
+  const titles = ['Who are you?', 'Your full name', 'Your nickname']
+  const subtitles = [
+    'Pick the player you want to be.',
+    /* SHORT ON PURPOSE. The header subtitle is a single truncated line, and
+       "This is how your teacher knows whose work this is" was cut off after
+       "whose...". The full explanation lives in the card below the field, so
+       the subtitle only has to say what to do. */
+    'Type your first and last name.',
+    'This is what the game calls you.',
+  ]
+
   return (
     <ScreenFrame
-      title={panel === 0 ? 'Who are you?' : 'What is your nickname?'}
-      subtitle={panel === 0 ? 'Pick the player you want to be.' : 'Now give yourself a name.'}
-      onBack={panel === 0 ? backToWelcome : () => setPanel(0)}
+      title={titles[panel]}
+      subtitle={subtitles[panel]}
+      onBack={panel === 0 ? backToWelcome : () => setPanel((panel - 1) as 0 | 1 | 2)}
       bar={
         panel === 0 ? (
           <button
             type="button"
-            onClick={toName}
-            disabled={!readyToName}
+            onClick={toFullName}
+            disabled={chosen === undefined}
+            className="btn-chunky w-full bg-turquoise py-4 text-[19px] text-on-turquoise"
+          >
+            Next
+          </button>
+        ) : panel === 1 ? (
+          <button
+            type="button"
+            onClick={toNickname}
+            disabled={!fullNameReady}
             className="btn-chunky w-full bg-turquoise py-4 text-[19px] text-on-turquoise"
           >
             Next
@@ -84,7 +144,7 @@ export function Profile() {
           <button
             type="button"
             onClick={confirm}
-            disabled={!nameReady}
+            disabled={!nicknameReady}
             className="btn-chunky w-full bg-turquoise py-4 text-[19px] text-on-turquoise"
           >
             Let&apos;s go!
@@ -142,9 +202,9 @@ export function Profile() {
             )
           })}
         </div>
-      ) : (
-        /* --- PANEL 1: the nickname, with the chosen player above the field so
-            the name is attached to a face the child already picked. --- */
+      ) : panel === 1 ? (
+        /* --- PANEL 1: the official name. The chosen player is above the
+            field so the name is attached to a face the child already picked. --- */
         <div className="flex flex-col gap-4">
           {chosen && (
             <div className="card-cream flex items-center gap-3 p-4">
@@ -157,8 +217,67 @@ export function Profile() {
                 className="h-[72px] w-[72px] shrink-0"
               />
               <p className="text-[15px] leading-5 text-indigo">
-                You are the <span className="font-extrabold">{chosen.label}</span>. The app will
-                call you by your nickname.
+                You are the <span className="font-extrabold">{chosen.label}</span>.
+              </p>
+            </div>
+          )}
+
+          <div className="card-cream p-4">
+            <label
+              htmlFor="full-name"
+              className="font-display mb-1 block text-[20px] leading-6 font-extrabold text-indigo"
+            >
+              Your full name
+            </label>
+            <input
+              id="full-name"
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && fullNameReady) toNickname()
+              }}
+              autoFocus
+              autoComplete="name"
+              autoCapitalize="words"
+              spellCheck={false}
+              maxLength={MAX_FULL_NAME}
+              enterKeyHint="next"
+              aria-label="Your full name"
+              aria-describedby="full-name-hint"
+              placeholder="First name and last name"
+              className="w-full rounded-[14px] bg-cream px-4 py-3 font-display text-[20px] leading-7 text-indigo shadow-[inset_0_2px_0_0_rgba(26,43,76,0.1)] placeholder:text-indigo/35 focus:outline-3 focus:outline-[var(--color-focus)]"
+            />
+            {/* THE HINT IS LIVE, and it is the rule. The button stays disabled
+                until there are two words, so the screen has to say what it is
+                waiting for rather than just looking broken. */}
+            <p id="full-name-hint" className="mt-2 text-sm leading-5 text-navy/80">
+              {fullNameReady
+                ? 'Your teacher will see this name.'
+                : 'First name and last name, please.'}
+            </p>
+          </div>
+
+          <p className="text-[14px] leading-5 text-navy/80">
+            Only your teacher sees this. Other students never do.
+          </p>
+        </div>
+      ) : (
+        /* --- PANEL 2: the alias. Pre-filled with the first name, and the
+            same face above it. --- */
+        <div className="flex flex-col gap-4">
+          {chosen && (
+            <div className="card-cream flex items-center gap-3 p-4">
+              <img
+                src={chosen.src}
+                alt=""
+                aria-hidden="true"
+                width={72}
+                height={72}
+                className="h-[72px] w-[72px] shrink-0"
+              />
+              <p className="text-[15px] leading-5 text-indigo">
+                The app will call you <span className="font-extrabold">{finalNickname}</span>.
               </p>
             </div>
           )}
@@ -173,10 +292,10 @@ export function Profile() {
             <input
               id="nickname"
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && nameReady) confirm()
+                if (e.key === 'Enter' && nicknameReady) confirm()
               }}
               autoFocus
               autoComplete="off"
@@ -189,9 +308,13 @@ export function Profile() {
               className="w-full rounded-[14px] bg-cream px-4 py-3 font-display text-[22px] leading-7 text-indigo shadow-[inset_0_2px_0_0_rgba(26,43,76,0.1)] placeholder:text-indigo/35 focus:outline-3 focus:outline-[var(--color-focus)]"
             />
             <p className="mt-2 text-sm text-navy/80">
-              {name.length} / {MAX_NICKNAME} letters
+              {nickname.length} / {MAX_NICKNAME} letters
             </p>
           </div>
+
+          <p className="text-[14px] leading-5 text-navy/80">
+            Your nickname stays on this device. Only your teacher sees your full name.
+          </p>
         </div>
       )}
     </ScreenFrame>

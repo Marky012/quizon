@@ -14,6 +14,14 @@ import { SYNC_APP, SYNC_SCHEMA_VERSION, type SyncPayload, type SyncSkill, type S
 export interface PayloadInput {
   classCode: string
   learnerCode: string
+  /**
+   * The official name. The ONE human identifier in the document.
+   *
+   * It is trimmed and capped here rather than trusted from the store, because
+   * this is the last place before the wire and the field is free text typed
+   * by a child on a phone keyboard.
+   */
+  fullName: string
   deviceId: string
   skills: SyncSkill[]
   tiers: Record<string, { needsAttention: boolean; hintUsed: boolean; storyId: string | null }>
@@ -22,6 +30,17 @@ export interface PayloadInput {
   history: readonly HistoryEntry[]
   report: StudentReport
   now: number
+}
+
+/**
+ * The official name, cleaned up for the wire.
+ *
+ * Whitespace is collapsed so a phone keyboard's stray double spaces do not
+ * turn "Maria  Santos" into a different name from "Maria Santos", and it is
+ * capped so a paste of an entire novel cannot land in a dashboard cell.
+ */
+export function normalizeFullName(raw: string): string {
+  return raw.trim().replace(/\s+/g, ' ').slice(0, 60)
 }
 
 /**
@@ -64,6 +83,7 @@ export function buildSyncPayload(input: PayloadInput): SyncPayload {
     schemaVersion: SYNC_SCHEMA_VERSION,
     classCode: input.classCode.trim().toUpperCase(),
     learnerCode: input.learnerCode,
+    fullName: normalizeFullName(input.fullName),
     deviceId: input.deviceId,
     sentAt: input.now,
     skills: input.skills,
@@ -95,6 +115,8 @@ export function buildSyncPayload(input: PayloadInput): SyncPayload {
  */
 export function progressSignature(input: {
   learnerCode: string
+  /** The official name. See the note on the field itself. */
+  fullName: string
   skills: { id: string; lessonComplete: boolean; pupEarned: boolean; pupUses: number; bestPreTestScore: number }[]
   tiers: Record<
     string,
@@ -118,6 +140,13 @@ export function progressSignature(input: {
     // there was nothing to send, and the new child would never appear on the
     // teacher's dashboard at all.
     learner: input.learnerCode,
+    // THE OFFICIAL NAME IS PART OF THE SIGNATURE TOO, for the same reason the
+    // learner code is: the record on the dashboard has to be able to change
+    // when the name changes. Without it, a device that synced before the
+    // learner had typed their name would decide there was "nothing new to
+    // send" and the teacher would never see the name at all - the one field
+    // the dashboard exists to show.
+    name: input.fullName,
     skills: input.skills.map((k) => [k.id, k.lessonComplete, k.pupEarned, k.pupUses, k.bestPreTestScore]),
     tiers: Object.entries(input.tiers).map(([id, t]) => [
       id,

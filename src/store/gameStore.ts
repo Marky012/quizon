@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware'
 import {
   ANSWER_FEEDBACK_DELAY,
   HINTS_PER_LEVEL,
+  MAX_FULL_NAME,
+  MAX_NICKNAME,
   PRETEST_PASSING_SCORE,
   QUESTION_HISTORY_LIMIT,
   TIER_ORDER,
@@ -192,7 +194,35 @@ export interface GameState {
   /** The pupil's own player character. Set once on the Profile screen before
    *  the intro; not the helper pup they pick on Welcome. */
   playerGender: PlayerGender
-  playerName: string
+
+  /**
+   * THE OFFICIAL NAME, and the only name that ever leaves the device.
+   *
+   * This is the name on the attendance sheet: the one the teacher reads off
+   * the dashboard and matches to a face in the classroom. It was added on
+   * 2026-10-22, and adding it deliberately REVERSES half of the privacy
+   * posture this app used to hold - the old rule was that no name ever
+   * travels and the anonymous learner code was the only identifier. That
+   * rule is still true of the NICKNAME below, and it is still true of
+   * everything else in the record.
+   *
+   * So there are now two names, and they do different jobs:
+   *
+   *   playerFullName   the official record. Goes to the teacher dashboard.
+   *   playerNickname   the in-game alias. Never leaves the device.
+   */
+  playerFullName: string
+
+  /**
+   * THE IN-GAME ALIAS. What the app calls the learner in the game.
+   *
+   * It is display-only and it never travels: the sync payload is built
+   * without it, and a test asserts it is absent from the document that goes
+   * to the server. A nickname is chosen by a child, is often a joke, and is
+   * not a legal name - so it has no business on an official record.
+   */
+  playerNickname: string
+
   profileCreated: boolean
   introCompleted: boolean
 
@@ -244,10 +274,21 @@ export interface GameActions {
   rollLearnerCode: () => void
   setAvatar: (id: string) => void
   startGame: () => void
-  /** Saves the player character and nickname chosen on the Profile screen. The
-   *  nickname is display-only: it is never exported to the teacher report,
-   *  keeping the learner-code anonymity posture intact. */
-  createProfile: (gender: PlayerGender, name: string) => void
+  /** Saves the player character, the official name and the in-game alias
+   *  chosen on the Profile screen.
+   *
+   *  THE TWO NAMES DO DIFFERENT JOBS, and the difference is the point:
+   *
+   *    fullName   the official record. This is the one that reaches the
+   *               teacher dashboard, because a teacher has to be able to say
+   *               "Maria Santos Reyes sat on the Maunahan" without guessing.
+   *    nickname   the in-game alias. It never leaves the device. It is what
+   *               the app calls the learner while they play.
+   *
+   *  Before 2026-10-22 the store held ONE name and refused to export it, so
+   *  the teacher saw only the anonymous learner code. The nickname half of
+   *  that rule is unchanged; the full name is the deliberate exception. */
+  createProfile: (gender: PlayerGender, fullName: string, nickname: string) => void
   completeIntro: () => void
 
   completeLesson: (skillId: string) => void
@@ -329,7 +370,8 @@ const initial: GameState = {
   avatarId: SKILLS[0]!.pup.id,
   hasStarted: false,
   playerGender: 'girl',
-  playerName: '',
+  playerFullName: '',
+  playerNickname: '',
   profileCreated: false,
   introCompleted: false,
   skills: freshSkills(),
@@ -357,10 +399,11 @@ export const useGameStore = create<GameState & GameActions>()(
       rollLearnerCode: () => set({ learnerCode: randomLearnerCode() }),
       setAvatar: (id) => set({ avatarId: id }),
       startGame: () => set({ hasStarted: true }),
-      createProfile: (gender, name) =>
+      createProfile: (gender, fullName, nickname) =>
         set({
           playerGender: gender,
-          playerName: name.trim().replace(/\s+/g, ' ').slice(0, 12),
+          playerFullName: fullName.trim().replace(/\s+/g, ' ').slice(0, MAX_FULL_NAME),
+          playerNickname: nickname.trim().replace(/\s+/g, ' ').slice(0, MAX_NICKNAME),
           profileCreated: true,
         }),
       completeIntro: () => set({ introCompleted: true }),
@@ -681,13 +724,37 @@ export const useGameStore = create<GameState & GameActions>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 1,
+      /* Version 2, 2026-10-22: the one name became two, and the old one was
+         renamed so that nobody could ship the wrong one to the server by
+         accident. `playerName` was the nickname and is now `playerNickname`;
+         `playerFullName` is new and did not exist before. */
+      version: 2,
+      migrate: (persisted) => {
+        const old = persisted as Partial<GameState> & { playerName?: string }
+        const { playerName, ...rest } = old
+        /* The cast is honest rather than lazy: a migration reads a PARTIAL
+           state - whatever the previous version happened to have written -
+           and produces a full one. TypeScript cannot know that the spread
+           plus the three fields below covers every persisted key. */
+        return {
+          ...rest,
+          playerNickname: rest.playerNickname ?? playerName ?? '',
+          playerFullName: rest.playerFullName ?? '',
+          /* AN INSTALL FROM BEFORE THE FULL NAME EXISTED has a profile but no
+             official name, and the teacher dashboard now needs one. Those
+             devices are sent back through the Profile screen to supply it -
+             Boot's routing sends a learner with no profile to /profile, so
+             setting this false is the whole migration. */
+          profileCreated: Boolean(rest.profileCreated && rest.playerFullName),
+        } as GameState
+      },
       partialize: (s) => ({
         learnerCode: s.learnerCode,
         avatarId: s.avatarId,
         hasStarted: s.hasStarted,
         playerGender: s.playerGender,
-        playerName: s.playerName,
+        playerFullName: s.playerFullName,
+        playerNickname: s.playerNickname,
         profileCreated: s.profileCreated,
         introCompleted: s.introCompleted,
         skills: s.skills,
