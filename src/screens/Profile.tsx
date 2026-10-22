@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ScreenFrame } from '@/components/ScreenFrame'
+import { StepIndicator } from '@/components/StepIndicator'
 import { play } from '@/lib/audio'
-import { useAppBack } from '@/lib/appBack'
 import { MAX_FULL_NAME, MAX_NICKNAME } from '@/constants/gameConfig'
+import { ONBOARDING_TOTAL, STEP_PROFILE } from '@/constants/onboarding'
 import { useGameStore, type PlayerGender } from '@/store/gameStore'
 
 /* ===========================================================================
@@ -42,6 +43,10 @@ import { useGameStore, type PlayerGender } from '@/store/gameStore'
    THE NICKNAME IS PRE-FILLED with the first name, so the common case is one
    tap on "Let's go!" and the child never has to think about it. Clearing it
    falls back to the first name rather than leaving the learner nameless.
+
+   THESE ARE STOPS 2 TO 4 OF SEVEN. The indicator at the top of the screen is
+   the same one the helper picker and the story carry, and it counts the whole
+   setup rather than this screen's three panels - see constants/onboarding.ts.
    =========================================================================== */
 
 const CHARACTERS: ReadonlyArray<{ id: PlayerGender; label: string; src: string }> = [
@@ -56,21 +61,38 @@ function words(value: string): string[] {
 
 export function Profile() {
   const navigate = useNavigate()
-  const backToWelcome = useAppBack('/welcome')
+  const location = useLocation()
   const createProfile = useGameStore((s) => s.createProfile)
   const hasStarted = useGameStore((s) => s.hasStarted)
   const profileCreated = useGameStore((s) => s.profileCreated)
 
-  const [gender, setGender] = useState<PlayerGender | null>(null)
-  const [fullName, setFullName] = useState('')
-  const [nickname, setNickname] = useState('')
-  const [panel, setPanel] = useState<0 | 1 | 2>(0)
+  /* THE DELIBERATE RETURN. The Intro's first panel has a back button, and it
+     comes back here to the nickname panel - which means this screen has to be
+     reachable AFTER profileCreated, or the one tap the spine promises would
+     dead-end. The route carries { panel } in its history state to say "this
+     visit is a step back, not a replay", and the answers are read back out of
+     the store so the child finds what they typed rather than a blank form. */
+  const returnPanel = (location.state as { panel?: number } | null)?.panel
+  const returning = returnPanel !== undefined
+
+  const storedGender = useGameStore((s) => s.playerGender)
+  const storedFullName = useGameStore((s) => s.playerFullName)
+  const storedNickname = useGameStore((s) => s.playerNickname)
+
+  const [gender, setGender] = useState<PlayerGender | null>(
+    returning ? storedGender : null,
+  )
+  const [fullName, setFullName] = useState(returning ? storedFullName : '')
+  const [nickname, setNickname] = useState(returning ? storedNickname : '')
+  const [panel, setPanel] = useState<0 | 1 | 2>(((returnPanel ?? 0) as 0 | 1 | 2))
 
   /* One-way door, mirroring Boot exactly: Profile is the current step only when
      the learner has started and has not yet made a profile. Either condition
      being off means a stale deep link (or a URL typed past Welcome), so hand it
-     to Boot - it already knows whether Welcome or the hub is the right stop. */
-  if (!hasStarted || profileCreated) return <Navigate to="/" replace />
+     to Boot - it already knows whether Welcome or the hub is the right stop.
+     The one exception is the marked return above, which is the spine walking
+     backwards of its own accord. */
+  if (!hasStarted || (profileCreated && !returning)) return <Navigate to="/" replace />
 
   const chosen = CHARACTERS.find((c) => c.id === gender)
   const nameParts = words(fullName)
@@ -120,7 +142,13 @@ export function Profile() {
     <ScreenFrame
       title={titles[panel]}
       subtitle={subtitles[panel]}
-      onBack={panel === 0 ? backToWelcome : () => setPanel((panel - 1) as 0 | 1 | 2)}
+      /* THE BACK ON THE GENDER PANEL IS THE FIRST STOP, not "wherever the app
+         history came from". The spine is linear, so stop 2's back is always
+         stop 1. Reading the history stack here was wrong once the Intro could
+         walk back into this screen: the stack then said /intro, and pressing
+         back on the gender question threw the child forward into the cutscene
+         they had just come from. */
+      onBack={panel === 0 ? () => navigate('/welcome') : () => setPanel((panel - 1) as 0 | 1 | 2)}
       bar={
         panel === 0 ? (
           <button
@@ -152,6 +180,16 @@ export function Profile() {
         )
       }
     >
+      {/* Stops 2 to 4 of the seven-stop setup spine. The indicator is a map
+          here, not a menu: the dots are not buttons, because jumping forward
+          from the name panel would walk the child past the name. */}
+      <StepIndicator
+        index={STEP_PROFILE + panel}
+        total={ONBOARDING_TOTAL}
+        label="Setup progress"
+        className="mb-4"
+      />
+
       {panel === 0 ? (
         /* --- PANEL 0: choose a player. Two picture buttons, one selection.
             The active card takes the Hub's turquoise fill plus a yellow ring

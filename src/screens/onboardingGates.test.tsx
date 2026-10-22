@@ -111,6 +111,17 @@ async function type(input: HTMLInputElement, value: string) {
   })
 }
 
+/**
+ * Which stop of the seven the indicator is showing.
+ *
+ * The setup spine is one indicator spread over three screens, so "the child is
+ * on step 5" is a property of the whole flow and not of any one screen. Reading
+ * it out of the DOM is the only way a test can see the joins.
+ */
+function currentStep(): string | null | undefined {
+  return container.querySelector<HTMLElement>('[data-current]')?.getAttribute('data-step')
+}
+
 declare global {
   // eslint-disable-next-line no-var
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -141,18 +152,22 @@ describe('the first-run spine, end to end', () => {
     renderAt('/welcome')
     await settle()
     expect(currentPath).toBe('/welcome')
+    expect(container.querySelectorAll('[data-step]')).toHaveLength(7)
+    expect(currentStep(), 'the helper picker is stop 1 of 7').toBe('0')
 
     await tap('Start the quest!')
     await tick()
     await settle()
     expect(currentPath).toBe('/profile')
     expect(useGameStore.getState().hasStarted).toBe(true)
+    expect(currentStep(), 'the gender question is stop 2 of 7').toBe('1')
 
     await tap('Play as Girl', 'aria')
     await tap('Next')
     await tick()
     await settle()
     expect(currentPath).toBe('/profile')
+    expect(currentStep(), 'the full name is stop 3 of 7').toBe('2')
 
     // PANEL 2 IS THE OFFICIAL NAME, and the button stays disabled until
     // there are two words - a single word does not identify a child in a
@@ -177,21 +192,80 @@ describe('the first-run spine, end to end', () => {
 
     const nickname = container.querySelector<HTMLInputElement>('#nickname')
     expect(nickname, 'panel 3 should be showing the nickname field').toBeTruthy()
+    expect(currentStep(), 'the nickname is stop 4 of 7').toBe('3')
     // It is pre-filled with the first name, so the common case is one tap.
     expect(nickname!.value).toBe('Maria')
     await type(nickname!, 'Mia')
     await tap("Let's go!")
     await settle()
     expect(currentPath).toBe('/intro')
+    expect(currentStep(), 'the first story panel is stop 5 of 7').toBe('4')
     expect(useGameStore.getState().profileCreated).toBe(true)
     expect(useGameStore.getState().playerGender).toBe('girl')
     expect(useGameStore.getState().playerFullName).toBe('Maria Santos Reyes')
     expect(useGameStore.getState().playerNickname).toBe('Mia')
 
+    await tap('Next')
+    await settle()
+    expect(currentStep(), 'the second story panel is stop 6 of 7').toBe('5')
+
+    await tap('Next')
+    await settle()
+    expect(currentStep(), 'the last story panel is stop 7 of 7').toBe('6')
+
     await tap('Skip')
     await settle()
     expect(currentPath).toBe('/hub')
     expect(useGameStore.getState().introCompleted).toBe(true)
+  })
+
+  it('walks back from the first story panel to the nickname, answers intact', async () => {
+    /* THE HOLE THIS FILLS. Every stop from the gender question onward could be
+       walked back except the first story panel, which used to hide its back
+       button. That made the spine one-way at exactly the join between Profile
+       and the Intro. */
+    setFlags({ hasStarted: true, profileCreated: true, introCompleted: false })
+    useGameStore.setState({
+      playerGender: 'girl',
+      playerFullName: 'Maria Santos Reyes',
+      playerNickname: 'Mia',
+    })
+    renderAt('/intro')
+    await settle()
+    expect(currentPath).toBe('/intro')
+    expect(currentStep(), 'the first story panel is stop 5 of 7').toBe('4')
+
+    await tap('Go back', 'aria')
+    await settle()
+    expect(currentPath).toBe('/profile')
+    expect(currentStep(), 'back lands on the nickname, stop 4 of 7').toBe('3')
+    const nickname = container.querySelector<HTMLInputElement>('#nickname')
+    expect(nickname, 'the return opens the nickname panel').toBeTruthy()
+    expect(nickname!.value, 'and keeps what the child typed').toBe('Mia')
+
+    /* AND IT KEEPS WALKING BACK, to the top of the spine. The gender panel's
+       back is the helper picker - not "the previous entry in the app history",
+       which says /intro once the cutscene can walk back into this screen. */
+    await tap('Go back', 'aria')
+    await settle()
+    expect(container.querySelector<HTMLInputElement>('#full-name')?.value).toBe(
+      'Maria Santos Reyes',
+    )
+    await tap('Go back', 'aria')
+    await settle()
+    expect(currentStep(), 'the gender panel, stop 2 of 7').toBe('1')
+    await tap('Go back', 'aria')
+    await settle()
+    expect(currentPath, 'stop 2 backs onto the helper picker, stop 1').toBe('/welcome')
+
+    /* AND FORWARD AGAIN, THROUGH THE PROFILE. A learner who re-picks their
+       helper must not jump from stop 1 to stop 5; the name screens are
+       prefilled, so this is three taps and not a re-typing. */
+    await tap('Start the quest!')
+    await tick()
+    await settle()
+    expect(currentPath).toBe('/profile')
+    expect(currentStep(), 'back at stop 2, not skipped to the story').toBe('1')
   })
 })
 

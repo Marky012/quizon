@@ -5,6 +5,8 @@ import { InstallButton } from '@/components/InstallButton'
 import { ScreenFrame } from '@/components/ScreenFrame'
 import { PupAvatar } from '@/components/PupAvatar'
 import { SkillSymbol } from '@/components/SkillSymbol'
+import { StepIndicator } from '@/components/StepIndicator'
+import { ONBOARDING_TOTAL, STEP_HELPER } from '@/constants/onboarding'
 import { SKILLS } from '@/content/manifest'
 import { WORLD } from '@/content/world'
 import { play, unlockAudio } from '@/lib/audio'
@@ -77,6 +79,7 @@ export function Welcome() {
   const rollLearnerCode = useGameStore((s) => s.rollLearnerCode)
   const startGame = useGameStore((s) => s.startGame)
   const introCompleted = useGameStore((s) => s.introCompleted)
+  const profileCreated = useGameStore((s) => s.profileCreated)
   const [tapped, setTapped] = useState(false)
   /* The burst counter, not a boolean. The confetti is a CSS animation, and a
      CSS animation only plays once per mount - so tapping a second pup has to
@@ -128,9 +131,21 @@ export function Welcome() {
     play('unlock')
     setTapped(true)
     startGame()
-    // A beat of feedback before moving, so the tap is acknowledged. Next stop
-    // is the Profile screen: the pupil picks their player and nickname there.
-    window.setTimeout(() => navigate('/profile'), 220)
+    /* A beat of feedback before moving, so the tap is acknowledged.
+       Next stop is the Profile screen: the pupil picks their player and
+       nickname there.
+
+       THE MARKED RETURN. A learner who walked all the way back here (the
+       gender panel's back button) already has a profile, and Profile is
+       shut to repeat visits - so without the state it would bounce to Boot,
+       which would send them straight to the Intro and skip stops 2 to 4.
+       The indicator says the spine has seven stops; this keeps that true.
+       A first-timer passes no state, because then those stored values are
+       empty and pre-selecting a gender for them would be a lie. */
+    window.setTimeout(
+      () => navigate('/profile', profileCreated ? { state: { panel: 0 } } : undefined),
+      220,
+    )
   }
 
   return (
@@ -150,6 +165,16 @@ export function Welcome() {
           on the screen; the logo IS the header on this screen, so the little
           strip of blue above it reads as wasted header space. */}
       <div className="-mt-3 flex flex-col gap-6">
+        {/* THE SETUP SPINE STARTS HERE. Seven stops run from this picker to the
+            last panel of the story, and this screen is the first that shows
+            them - there is no back button, because this is the first stop. */}
+        <StepIndicator
+          index={STEP_HELPER}
+          total={ONBOARDING_TOTAL}
+          label="Setup progress"
+          className="-mb-4"
+        />
+
         {/* HERO: no title bar on this screen - the logo IS the header. The logo
             sits in normal flow and the blue card is pulled up under it with a
             negative bottom margin, so the pup's lower half overlaps the card's
@@ -158,12 +183,14 @@ export function Welcome() {
             absolute positioning) keeps the whole mark on screen at 320px wide
             and never clips it against the viewport top.
 
-            THE MARK IS 210px, NOT 240px, and that is a FOLD-OVERFITTING
+            THE MARK IS 190px, NOT 210px, and that is a FOLD-OVERFITTING
             DECISION. At 240px the hero and its card together stood 350px tall,
             which on a 360x640 phone pushed the first row of pups under the
             fixed "Start the quest!" bar - a child met four half-dogs and a
-            button. At 210px the mark still owns the screen, and the whole
-            first row of helpers plus their names now clears the bar.
+            button. It went to 210px and cleared, then the seven-stop setup
+            indicator took 36px back at the top of the screen on 2026-10-22, so
+            it went to 190px. 190 still owns the screen and the whole first row
+            of helpers, names included, now clears the bar again.
 
             pt-16 rather than pt-20 for the same reason: the card's top padding
             is the space the logo's lower half hangs into, and the shorter
@@ -172,9 +199,9 @@ export function Welcome() {
           <img
             src="/assets/brand/quizon-logo.png"
             alt=""
-            width={210}
-            height={210}
-            className="relative z-10 -mb-16 h-[210px] w-[210px] animate-float drop-shadow-[0_10px_0_rgba(26,43,76,0.45)]"
+            width={190}
+            height={190}
+            className="relative z-10 -mb-16 h-[190px] w-[190px] animate-float drop-shadow-[0_10px_0_rgba(26,43,76,0.45)]"
           />
           <div className="hero-surface w-full px-4 pt-16 pb-5 text-center">
             <p className="text-[22px] leading-7 font-bold tracking-wide text-turquoise">

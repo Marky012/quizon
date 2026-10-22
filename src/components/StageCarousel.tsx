@@ -410,7 +410,6 @@ export function StageCarousel({
           onSelect={(i) => {
             if (i !== active) centreIndex(i)
           }}
-          className="w-[150px] sm:w-[190px]"
         />
         <Arrow direction="right" disabled={active === cards.length - 1} onClick={() => go(1)} />
       </div>

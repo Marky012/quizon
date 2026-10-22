@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { ScreenFrame } from '@/components/ScreenFrame'
 import { PupAvatar } from '@/components/PupAvatar'
 import { StepIndicator } from '@/components/StepIndicator'
+import { ONBOARDING_TOTAL, STEP_STORY } from '@/constants/onboarding'
 import { PUP_BY_ID, SKILLS } from '@/content/manifest'
 import { WORLD } from '@/content/world'
 import { play } from '@/lib/audio'
@@ -17,6 +18,11 @@ import { useReducedMotion } from '@/lib/useReducedMotion'
    always visible and never punished. A learner who has been here before
    mid-session does not need a cutscene, and a required cutscene is exactly how
    a child ends up stuck on a splash screen.
+
+   THESE ARE STOPS 5 TO 7 OF SEVEN. The seven dots at the top started on the
+   helper picker and ran through the profile questions, so this screen shows
+   where the cutscene sits in the whole first run rather than pretending it is
+   the whole thing - see constants/onboarding.ts.
    =========================================================================== */
 
 export function Intro() {
@@ -52,14 +58,30 @@ export function Intro() {
     else setPanel(panel + 1)
   }
 
+  /* THE BACK BUTTON ON THE FIRST STORY PANEL. It leaves the cutscene and lands
+     back on the Profile screen's nickname panel, carrying the panel number in
+     the route state so Profile knows the visit is a step back rather than a
+     replay (see the guard there). Without this the spine had a hole: every
+     stop from the gender question onward could be walked back except the one
+     where the story begins. */
+  function back() {
+    if (panel > 0) {
+      setPanel(panel - 1)
+      return
+    }
+    /* The header's BackButton already plays the tap, so this branch plays
+       nothing - a second 'tap' would fire two clicks on one press. */
+    navigate('/profile', { state: { panel: 2 } })
+  }
+
   return (
     <ScreenFrame
       title="Before you start"
       /* NO SUBTITLE. It used to say "Panel 2 of 3", and the indicator below
-         now says the same thing with a bar and three dots instead of three
+         now says the same thing with a bar and dots instead of three
          words. Saying it twice is noise, and the indicator is the one a
          child can read at a glance. */
-      onBack={panel === 0 ? undefined : () => setPanel(panel - 1)}
+      onBack={back}
       headerRight={
         <button
           type="button"
@@ -79,6 +101,18 @@ export function Intro() {
         </button>
       }
     >
+      {/* Stops 5 to 7 of the seven-stop setup spine, which started on the
+          helper picker and ran through the profile questions. The bar is a map
+          here, not a menu - the dots are not buttons. Tapping the fifth dot on
+          a cutscene would be a no-op a child would read as broken, and tapping
+          a LATER one would skip a story panel they have not seen. */}
+      <StepIndicator
+        index={STEP_STORY + panel}
+        total={ONBOARDING_TOTAL}
+        label="Setup progress"
+        className="mb-4"
+      />
+
       <div
         key={panel}
         className={`flex flex-col gap-4 ${reduced ? '' : 'animate-slide-up'}`}
@@ -99,27 +133,6 @@ export function Intro() {
           </>
         )}
       </div>
-
-      {/* THE PROGRESS INDICATOR. It replaced a row of plain dots on
-          2026-10-22, and it is the same component the Hub's carousel uses, so
-          the two screens cannot drift apart. The bar says how far through the
-          story you are and the dots on it say which panel you are on.
-
-          The dots are still buttons and they still jump straight to a panel -
-          the visible dot is 14px but the button around it is 44px, because a
-          child aiming at a 14px target on a phone in bright light is aiming
-          at the wrong thing. */}
-      <StepIndicator
-        index={panel}
-        total={total}
-        label="Story panels"
-        stepLabels={WORLD.intro.map((p) => p.title)}
-        onSelect={(i) => {
-          play('tap')
-          setPanel(i)
-        }}
-        className="mt-6"
-      />
 
       <p className="mt-6 text-center text-sm text-navy/80">
         {SKILLS.length} helpers, eight reading skills, three places to visit.

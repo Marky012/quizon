@@ -1,46 +1,52 @@
 import type { CSSProperties } from 'react'
 
 /* ===========================================================================
-   THE STEP INDICATOR - a progress bar with step markers sitting on it.
+   THE STEP INDICATOR - the "hybrid bar + dot" pattern (UI reference sheet,
+   tile 2 in the second row).
 
-   ONE COMPONENT, TWO SCREENS. The Intro walks through three story panels
-   and the Hub is a carousel of three stages, and both needed to say "you are
-   on step N of three". The Intro had plain dots and the Hub had the words
-   "1 of 3", which are two different answers to the same question. This is the
-   third answer: a bar that shows how far along you are, with dots on it that
-   show WHICH step you are on. One component, so the two screens cannot drift.
+   THE SHAPE CARRIES THE STATE, NOT A TRACK. There is no groove running behind
+   the steps and no fill that grows across it. Each step is one mark:
 
-   THE GEOMETRY, AND WHY THE FILL ENDS HALFWAY TO THE NEXT DOT.
+     a filled navy DOT        - a step the learner has finished
+     an indigo CAPSULE (bar)  - the step they are on
+     a pale navy DOT          - a step still ahead
 
-   The dots sit at the CENTRE of each step's segment: with three steps that is
-   16.7%, 50% and 83.3% of the track. The fill runs to the END of the current
-   segment, which is (index + 1) / total - so it always stops exactly
-   halfway between the current dot and the next one. That reads correctly
-   without a rule to explain it: the fill has swallowed the current step and
-   is heading for the next.
+   That is why it is called hybrid: the current step is a bar and the rest are
+   dots. The elongated shape is the "you are here" signal, so the state
+   survives in greyscale and for a colour-blind eye, and the whole row stays
+   the same width as the steps change.
 
-   THE DOTS ARE NAVY ON THE CREAM/TRACK SIDE AND NAVY ON THE TURQUOISE SIDE,
-   so they are visible in both. An early version made the finished dots
-   turquoise, which made them vanish into the turquoise fill they were
-   supposed to sit on.
+   THIS REPLACED A BAR-WITH-DOTS-ON-IT on 2026-10-22. The old one drew a
+   continuous track and a turquoise fill that ran to the end of the current
+   segment, which read as "progress through a list" - fine for a carousel of
+   three, but wrong for a seven-step setup spine, where the learner needs to
+   see the individual stops and not a percentage. It also needed its own
+   comment explaining where a fill should stop, which is a sign the shape was
+   doing too little work.
 
-   THE CURRENT DOT IS BIGGER AND HALOED. Scale plus a cream ring, so "you are
-   here" survives being seen at arm's length on a phone in bright light.
+   ONE COMPONENT, TWO LANGUAGES. The Hub's stage carousel passes onSelect and
+   the dots become buttons that jump to a stage. The onboarding spine does not:
+   its steps live on three different screens and two of them are gates (a full
+   name and a nickname), so a dot that jumped forward would walk a child past
+   the thing the screen exists to ask for. Those marks are a map, the Hub's are
+   a menu.
 
-   THE DOTS ARE BUTTONS. On the Intro they jump to a panel and on the Hub they
-   jump to a stage, and a 14px dot is not a tap target a child can hit. The
-   BUTTON is 44px - the minimum - and the dot is drawn inside it. The
-   invisible button is taller than the track, which is why the row that holds
-   this is 44px tall even though the bar is 10px.
+   THE HUB'S BUTTONS ARE 44px SQUARE - the art bible's minimum - because a
+   16px dot is not a tap target a child can hit on a phone in bright light.
+   This is also why that row is 44px tall even though every mark is 16px.
 
    IT IS NOT A progressbar ROLE. A progressbar's contents are presentational
-   to a screen reader, and these dots are buttons that can be pressed. So the
-   group carries a label, and the current dot carries aria-current="step".
+   to a screen reader, and the Hub's dots are buttons that can be pressed. So
+   the group carries a label and the current step carries aria-current="step".
+   When the marks are not interactive there is nothing to press, so instead a
+   single sr-only line says "Step 3 of 7" - the same thing the shape says.
    =========================================================================== */
 
-/** The visible size of one dot. */
-const DOT = 14
-/** The tap target around it. The art bible's 44px minimum. */
+/** The visible diameter of a dot, and the height of the capsule. */
+const DOT = 16
+/** How long the current step's capsule is. */
+const BAR = 44
+/** The tap target around a dot on an interactive row. */
 const HIT = 44
 
 export function StepIndicator({
@@ -55,63 +61,53 @@ export function StepIndicator({
   index: number
   /** How many steps there are. */
   total: number
-  /** What the group is, e.g. "Story panels". Read out by assistive tech. */
+  /** What the group is, e.g. "Setup progress". Read out by assistive tech. */
   label: string
   /** Optional per-step names, used in the button's accessible name. */
   stepLabels?: readonly string[]
-  /** Fired when a step is tapped. Omit to render the dots as plain marks. */
+  /** Fired when a step is tapped. Omit to render the marks as a plain map. */
   onSelect?: (index: number) => void
   className?: string
 }) {
   if (total <= 0) return null
   const safeIndex = Math.min(Math.max(index, 0), total - 1)
-  const fillPct = ((safeIndex + 1) / total) * 100
+
+  /* 44px tall when the marks are buttons, because that is the tap target. The
+     onboarding map has nothing to press, so it can be shorter - which is worth
+     doing: on the helper picker those extra pixels are the difference between
+     the first row of pups' names clearing the bottom bar and sitting under it. */
+  const rowHeight = onSelect ? 'h-11' : 'h-9'
 
   return (
     <div
       role="group"
       aria-label={label}
-      className={`relative flex h-11 items-center ${className}`}
+      className={`flex items-center justify-center gap-2 ${rowHeight} ${className}`}
     >
-      {/* THE TRACK. Indigo-soft, the same colour the quiz's progress bar uses
-          for its empty part, so the app has one progress bar and not two. */}
-      <span
-        aria-hidden="true"
-        className="absolute inset-x-0 h-2.5 rounded-pill bg-indigo-soft"
-      >
-        <span
-          className="block h-full rounded-pill bg-turquoise transition-[width] duration-500 ease-out"
-          style={{ width: `${fillPct}%` }}
-        />
-      </span>
-
       {Array.from({ length: total }, (_, i) => {
         const isCurrent = i === safeIndex
         const isDone = i < safeIndex
-        const position = ((i + 0.5) / total) * 100
         const name = stepLabels?.[i]
-        const dotClass = [
-          'block rounded-full border-2 transition-transform duration-300 ease-out',
-          isCurrent
-            ? 'scale-[1.35] border-cream bg-navy shadow-[0_0_0_2px_rgb(255_253_244/0.9)]'
-            : isDone
-              ? 'border-navy bg-navy'
-              : 'border-navy/45 bg-cream',
-        ].join(' ')
 
-        const inner = <span aria-hidden="true" className={dotClass} style={{ width: DOT, height: DOT }} />
+        /* The capsule grows out of its own dot rather than appearing at full
+           width, so stepping forward reads as "this stop opened up". Under
+           reduced motion the global rule collapses the duration. */
+        const mark = (
+          <span
+            aria-hidden="true"
+            /* The two data attributes are how a test asks "which step is the
+               learner on" without parsing pixels. */
+            data-step={i}
+            data-current={isCurrent ? '' : undefined}
+            className={`block rounded-pill transition-[width,background-color] duration-300 ease-out ${
+              isCurrent ? 'bg-indigo' : isDone ? 'bg-navy' : 'bg-navy/25'
+            }`}
+            style={{ width: isCurrent ? BAR : DOT, height: DOT }}
+          />
+        )
 
         if (!onSelect) {
-          return (
-            <span
-              key={i}
-              aria-hidden="true"
-              className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${position}%` }}
-            >
-              {inner}
-            </span>
-          )
+          return <span key={i}>{mark}</span>
         }
 
         return (
@@ -125,13 +121,15 @@ export function StepIndicator({
                and a yellow ring on every tap is noise. focus-visible draws
                the ring for a keyboard user, which is the only person who
                needs to know where they are. */
-            className="absolute top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:outline-3 focus-visible:outline-[var(--color-focus)]"
-            style={{ left: `${position}%`, width: HIT, height: HIT } as CSSProperties}
+            className="flex items-center justify-center rounded-full focus-visible:outline-3 focus-visible:outline-[var(--color-focus)]"
+            style={{ width: HIT, height: HIT } as CSSProperties}
           >
-            {inner}
+            {mark}
           </button>
         )
       })}
+
+      {!onSelect && <span className="sr-only">{`Step ${safeIndex + 1} of ${total}`}</span>}
     </div>
   )
 }
