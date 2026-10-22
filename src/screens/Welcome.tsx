@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ConfettiBurst } from '@/components/ConfettiBurst'
 import { InstallButton } from '@/components/InstallButton'
@@ -9,6 +9,7 @@ import { StepIndicator } from '@/components/StepIndicator'
 import { ONBOARDING_TOTAL, STEP_HELPER } from '@/constants/onboarding'
 import { SKILLS } from '@/content/manifest'
 import { WORLD } from '@/content/world'
+import { accentSoftVar } from '@/lib/accents'
 import { play, unlockAudio } from '@/lib/audio'
 import { useReducedMotion } from '@/lib/useReducedMotion'
 import { useGameStore } from '@/store/gameStore'
@@ -30,45 +31,67 @@ import { useGameStore } from '@/store/gameStore'
    =========================================================================== */
 
 /**
- * The size of one pup tile in the picker.
+ * The size of one pup cut-out in the picker.
  *
- * BIGGER THAN THE GRID COLUMN ON PURPOSE, so the tiles hang over their
- * neighbours and the eight of them read as a huddle instead of a spreadsheet.
+ * THE PUPS ARE CUT OUT NOW, NOT TILED. The old picker drew each helper in a
+ * 112px cream tile with a navy border, and the TILE was what gave a cream pup
+ * (Franky) its silhouette. The tiles are gone: each pup is a sticker riding the
+ * top edge of its own indigo card, and the card carries the NAME where the
+ * tile used to carry a frame. So the silhouette has to come from somewhere
+ * else, and it comes from the card - the dog's body is over the indigo card,
+ * its head is over the cream page, and a hard navy drop-shadow gives the head
+ * its edge.
  *
- * At 360px the content column is 328px, so each of the four columns is 82px
- * and a 112px tile overhangs it by 15px a side - the neighbour covers 30px of
- * the tile beside it, which is a quarter of the tile and plainly visible.
- *
- * WHY THAT DOES NOT HIDE THE FACES. What the overlap eats is the OUTER part
- * of the tile: the dog art sits in the middle 60% of it, and the head in the
- * middle 35%, so the 82px that survive the neighbour's overhang still hold
- * the whole head and most of the body. At 320px the columns are 72px and a
- * 112px tile bleeds 4px past the screen edge, which is the price of the
- * huddle and is the only part of a tile that gets cut.
+ * 88px keeps the dog about 42px wide and 81px tall (the art fills 92% of its
+ * box), and leaves room for the name under it in a 76px column.
  */
-const PUP_SIZE = 112
+const PUP_SIZE = 88
 
 /**
- * Where one pup sits in the huddle: a tilt and a lift.
+ * How much of the sticker's box sits over its own card.
+ *
+ * The art fills 92% of the box vertically, so a 22px overlap puts the dog's
+ * paws about 18px INTO the card and its head about 62px above the card's top
+ * edge. The card's top padding (PUP_CARD_PAD) is set to match, so the name
+ * always starts clear of the paws.
+ */
+const PUP_OVERLAP = 22
+
+/**
+ * The card's top padding: where the paws land, plus room for them.
+ */
+const PUP_CARD_PAD = 30
+
+/**
+ * How long the toast stays up.
+ *
+ * The purpose lines are one short sentence, so five seconds is about two reads
+ * for a Grade 5 learner. A tap dismisses it sooner, and it never blocks the
+ * picker for longer than that.
+ */
+const TOAST_MS = 5000
+
+/**
+ * Where one pup sits in the huddle: a tilt.
  *
  * THE ROW CURVES. Four across is a line, and a line of eight dogs is a
- * spreadsheet. The outer pups tilt away from the middle and sit lower, so the
- * row reads as the top of a mound rather than a row of cards - the same gentle
- * arc the art bible draws above the Welcome wordmark in panel 02.
+ * spreadsheet. The outer pups lean away from the middle, so the row reads as a
+ * pile of puppies rather than a row of cards - the same gentle arc the art
+ * bible draws above the Welcome wordmark in panel 02.
+ *
+ * THE TILT IS ON THE STICKER ONLY, never on the card. A tilted card reads as
+ * a broken grid; a tilted PUPPY reads as a pup. So the card stays square to
+ * its column and the dog leans on its paws, pivoting from the bottom centre.
  *
  * The tilt is small on purpose: 5 degrees is enough to break the grid, and
  * more than that starts to look like a card game rather than a pile of
  * puppies.
  */
-function arcFor(index: number): { tilt: number; lift: number } {
+function arcFor(index: number): { tilt: number } {
   const col = index % 4
   // -1 on the left pup, +1 on the right one, 0 in the middle.
   const spread = (col - 1.5) / 1.5
-  return {
-    tilt: spread * 5,
-    // The middle two sit highest, the outer two lowest.
-    lift: Math.abs(spread) * 7,
-  }
+  return { tilt: spread * 5 }
 }
 
 export function Welcome() {
@@ -88,6 +111,22 @@ export function Welcome() {
   const [burst, setBurst] = useState(0)
   const reduced = useReducedMotion()
 
+  /* THE TOAST. Not a boolean: tapping the SAME pup twice has to restart the
+     five-second timer, and a boolean would leave the first timer running, so
+     the toast would vanish early on the second tap. A fresh object per tap is
+     what makes the timer effect below fire again. */
+  const [toast, setToast] = useState<{ pupId: string } | null>(null)
+
+  /* THE TOAST TIMER. It runs for TOAST_MS and then takes the toast back down.
+     Clearing it on the way out matters: without it a toast that was dismissed
+     by a tap would still be holding a timer that fires later and clears a
+     toast that has already been replaced. */
+  useEffect(() => {
+    if (!toast) return
+    const timer = window.setTimeout(() => setToast(null), TOAST_MS)
+    return () => window.clearTimeout(timer)
+  }, [toast])
+
   /* One-way door, the same pattern Profile already uses. Once the intro has
      finished this screen is no longer an active step - a returning learner who
      types /welcome (or follows a stale browser-back entry) must not be walked
@@ -102,19 +141,22 @@ export function Welcome() {
      moves to Settings rather than un-gating this screen. */
   if (introCompleted) return <Navigate to="/" replace />
 
-  /* THE CHOSEN SKILL. The eight helpers are not eight pets - each one OWNS one
-     of the eight reading skills, and this is the lookup that says which skill
-     the tapped pup teaches. Without it the picker is decoration; with it, the
-     child is choosing the reading power they will practise first.
+  /* THE TOASTED SKILL. The eight helpers are not eight pets - each one OWNS
+     one of the eight reading skills, and this is the lookup that says which
+     skill the tapped pup teaches. Without it the picker is decoration; with
+     it, the child is choosing the reading power they will practise first.
 
-     avatarId always names a real pup (the store seeds it from SKILLS[0] and
-     only setAvatar writes it), so the fallback is belt-and-braces rather than
-     a real case. */
-  const chosen = SKILLS.find((s) => s.pup.id === avatarId) ?? SKILLS[0]!
+     Driven by the tap rather than by the store, so the toast can never
+     describe a pup the learner did not just pick. */
+  const toasted = toast ? SKILLS.find((s) => s.pup.id === toast.pupId) : undefined
 
   function choose(pupId: string) {
     play('select')
     setAvatar(pupId)
+    /* THE ANSWER TO THE TAP. It used to sit in a readout card under the grid,
+       which pushed the whole picker down the screen and made the choice feel
+       permanent. As a toast it answers the tap and then gets out of the way. */
+    setToast({ pupId })
     if (reduced) return
     /* The celebration. The app already says "you earned something" with
        confetti on the Hub, so this is the same language on the first screen:
@@ -248,31 +290,37 @@ export function Welcome() {
           <h2 className="mb-1 text-[20px] text-indigo">Choose your helper</h2>
           <p className="mb-3 text-indigo/85">You can change this later.</p>
 
-          {/* THE HUDDLE. The eight helpers overlap each other the way the pack
-              overlaps on the Hub's grass bench, so the row reads as one group of
-              dogs instead of eight app icons in a grid.
+          {/* THE HELPER CARDS. Each pup is a cut-out sticker riding the top
+              edge of its own indigo card, and the NAME is inside the card.
 
-              THE OVERLAP IS IN THE TILE, NOT IN THE COLUMN, and that is the whole
-              trick. Each pup keeps its own grid column, so its name still sits
-              under its own face, but the round tile is WIDER than its column and
-              hangs over its neighbour. The neighbour is painted later, so it
-              covers the hanging edge and the face stays whole in the middle.
+              WHY CARDS AND NOT TILES. The old picker drew eight cream tiles
+              with a navy border, and the name sat on the cream page below
+              each one. That gave a cream pup (Franky) its silhouette, but it
+              spent a whole screen of height on frames that said nothing, and
+              the answer to the tap had to go somewhere else entirely - which
+              is why a readout card used to sit under the grid. Now the card
+              IS the tile: it carries the pup's accent glow, it carries the
+              name, and the pup rides over its top edge the way the Woof
+              School stickers ride their skill cards. One box per helper
+              instead of a box plus a name plus a readout.
 
-              WHICH IS WHY THE BENCH LAYOUT WAS NOT COPIED. The bench runs eight
-              112px dogs in 45px columns, so each dog shows about 40% of itself.
-              That is fine for a decorative row with no tap targets, and it is
-              exactly why that file says the layout must never be reused for
-              anything the child has to hit. Here every pup keeps about 80% of
-              its width, which is both a face you can recognise and a tap target
-              well over the 44px minimum.
+              THE OVERLAP IS IN THE STICKER, NOT IN THE COLUMN. Each pup keeps
+              its own grid column - so its name still sits under its own face
+              - but the cut-out is WIDER than its column, so it hangs over the
+              column's edges and its hard shadow falls across the card's top
+              edge. That is what makes eight helpers read as one group
+              instead of eight app icons. The column gap absorbs the overhang,
+              so a pup never lands on its neighbour's card or its neighbour's
+              name.
 
               THE SELECTED PUP COMES FORWARD, exactly as art bible 1.4 says: it
-              scales to 1.06, gains a 4px indigo ring, and is raised above its
-              neighbours so its check badge is never buried under the next dog. */}
-          <div className="grid grid-cols-4 gap-y-1">
+              scales to 1.06, its card takes a 4px yellow ring, and it is
+              raised above its neighbours so its check badge is never buried
+              under the next dog. */}
+          <div className="grid grid-cols-4 gap-x-2 gap-y-3">
             {SKILLS.map((skill, index) => {
               const active = avatarId === skill.pup.id
-              const { tilt, lift } = arcFor(index)
+              const { tilt } = arcFor(index)
               const col = index % 4
               return (
                 <button
@@ -280,16 +328,22 @@ export function Welcome() {
                   type="button"
                   onClick={() => choose(skill.pup.id)}
                   aria-pressed={active}
+                  /* THE NAME IS THE LABEL. One name for the button, said
+                     once: the cut-out's own alt text and the name inside the
+                     card would otherwise both be read out, so the pup's
+                     purpose rides along in the label instead. */
+                  aria-label={`Choose ${skill.pup.name}, the ${skill.name} helper`}
                   /* THE FAN ORDER. Within a row the LEFT-most pup is in front,
-                     like a hand of cards fanned from the left, so the row has a
-                     front edge instead of a stack of equal tiles. The selected
-                     pup is above all of them, so its ring and badge are never
-                     buried under a neighbour. */
+                     like a hand of cards fanned from the left, so a sticker
+                     that reaches over its neighbour's edge never ends up
+                     behind it. The selected pup is above all of them, so its
+                     ring and badge are never buried under the next dog. */
                   /* THE ASSEMBLY. The huddle drops into place like a team photo
-                     being taken - eight tiles, staggered left to right, top row
-                     first. The animation lives on THIS element, not on the tile
-                     span, because the tile already carries the arc's own
-                     transform and two transforms on one element fight.
+                     being taken - eight helpers, staggered left to right, top
+                     row first. The animation lives on THIS element, not on the
+                     sticker span, because the sticker already carries the
+                     arc's own transform and two transforms on one element
+                     fight.
 
                      NOT APPLIED AT ALL under reduced motion. index.css collapses
                      the DURATION globally but says nothing about the DELAY, and
@@ -302,89 +356,59 @@ export function Welcome() {
                     animationDelay: reduced ? undefined : `${90 + index * 45}ms`,
                   }}
                 >
-                  <span className="relative block w-full" style={{ height: PUP_SIZE + 12 }}>
-                    <span
-                      className="absolute top-0 left-1/2 transition-transform"
-                      style={{
-                        width: PUP_SIZE,
-                        height: PUP_SIZE,
-                        // Composed by hand: Tailwind's translate/rotate/scale
-                        // utilities would compose too, but this one needs the
-                        // arc's numbers as well.
-                        transform: `translate(-50%, ${lift}px) rotate(${tilt}deg) scale(${
-                          active ? 1.06 : 1
-                        })`,
-                      }}
-                    >
-                      <PupAvatar
-                        pup={skill.pup}
-                        size={PUP_SIZE}
-                        /* THE DEPTH. A soft drop shadow is what tells the eye
-                           that these are tiles ON TOP of each other rather than
-                           a row of tiles that happen to touch. */
-                        className={`drop-shadow-[0_8px_12px_rgb(26_35_126/0.4)] ${
-                          active ? 'ring-4 ring-indigo rounded-[28px]' : ''
-                        }`}
-                      />
+                  {/* THE STICKER. Cut out (plain), hard sticker shadow, riding
+                      the card's top edge: the Welcome logo's exact treatment,
+                      and the Woof School skill card's. The negative bottom
+                      margin is what pulls the card up under it, so the paws
+                      land ON the card instead of beside it. The tilt pivots
+                      from the bottom centre, so the pup leans on its paws and
+                      the card stays square. */}
+                  <span
+                    className="relative z-20 block"
+                    style={{
+                      marginBottom: -PUP_OVERLAP,
+                      transform: `rotate(${tilt}deg) scale(${active ? 1.06 : 1})`,
+                      transformOrigin: 'bottom center',
+                    }}
+                  >
+                    <PupAvatar
+                      pup={skill.pup}
+                      size={PUP_SIZE}
+                      plain
+                      className="drop-shadow-[0_6px_0_rgba(26,43,76,0.45)]"
+                    />
+                  </span>
+
+                  {/* THE CARD. Indigo depth (see .skill-surface in index.css)
+                      with the pup's own accent as the glow, and the NAME
+                      inside it. The top padding is where the paws land, so the
+                      name always starts clear of them. */}
+                  <span
+                    className={`skill-surface relative flex w-full flex-col items-center justify-end rounded-[18px] px-1 pb-1.5 ${
+                      active ? 'ring-4 ring-yellow' : ''
+                    }`}
+                    style={
+                      {
+                        paddingTop: PUP_CARD_PAD,
+                        '--skill-glow': accentSoftVar(skill.pup.accent),
+                      } as CSSProperties
+                    }
+                  >
+                    <span className="font-display text-[13px] leading-4 text-cream">
+                      {skill.pup.name}
                     </span>
                     {active && (
                       <span
                         aria-hidden="true"
-                        className="absolute top-1 right-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-indigo text-[14px] leading-none font-bold text-cream"
+                        className="absolute -top-2 right-1 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-yellow text-[14px] leading-none font-bold text-indigo"
                       >
                         ✓
                       </span>
                     )}
                   </span>
-                  <span
-                    className={`text-[13px] leading-4 font-bold ${
-                      active ? 'text-indigo' : 'text-indigo/70'
-                    }`}
-                  >
-                    {skill.pup.name}
-                  </span>
-                  <span className="sr-only">{active ? 'Selected' : ''}</span>
                 </button>
               )
             })}
-          </div>
-
-          {/* THE READOUT. This is the answer to the tap, and it sits directly
-              under the finger that made it: the ring and the badge say "you
-              picked THIS one", and this card says what you picked it FOR.
-
-              It is the one piece of new information on the screen, and it is
-              the reason the picker is a decision rather than decoration. The
-              eight pups each own one reading skill, so the child is choosing
-              the reading power they will practise first - and they meet all
-              eight skill names by their own names, which is the vocabulary the
-              rest of the app, the lessons and the report all use.
-
-              IT IS A LIVE REGION, because a screen-reader user gets the
-              selection from the button's own "Selected" text and would
-              otherwise never hear which skill they just chose. The purpose
-              line is the manifest's own wording, verbatim, so it says exactly
-              what the Hub's skill card says about the same skill. */}
-          <div
-            aria-live="polite"
-            className="card-cream mt-3 flex items-center gap-3 p-3"
-          >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-turquoise-soft">
-              <SkillSymbol id={chosen.symbol} size={26} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="flex flex-wrap items-baseline gap-x-2">
-                <span className="font-display text-[19px] leading-6 text-indigo">
-                  {chosen.pup.name}
-                </span>
-                <span className="text-[13px] leading-4 font-bold text-navy/70">
-                  {chosen.name}
-                </span>
-              </span>
-              <span className="mt-0.5 block text-[13px] leading-4 text-navy/85">
-                {chosen.purpose}
-              </span>
-            </span>
           </div>
 
           {/* THE INSTALL OFFER. The boot screen gets one too, but the boot
@@ -395,6 +419,64 @@ export function Welcome() {
               device that already has QuizOn! installed it is simply absent. */}
           <InstallButton className="mt-4" />
         </section>
+      </div>
+
+      {/* THE TOAST. The answer to the tap, and the only piece of new
+          information on the screen - it is why the picker is a decision rather
+          than decoration. The eight pups each own one reading skill, so the
+          child is choosing the reading power they will practise first, and
+          they meet all eight skill names by their own names, which is the
+          vocabulary the rest of the app, the lessons and the report all use.
+
+          IT IS A TOAST, NOT A CARD UNDER THE GRID, because the card was the
+          most expensive thing on this screen: it pushed the whole picker down
+          and left a permanent band of new information under a decision the
+          child has already made. The toast answers the tap and then gets out
+          of the way. It floats just above the fixed bottom bar, and it never
+          covers the bar itself.
+
+          IT IS A LIVE REGION, because a screen-reader user gets the selection
+          from the button's own aria-pressed state and would otherwise never
+          hear WHICH skill they just chose. The container is always mounted and
+          only its contents change - a live region that is added to the DOM
+          together with its text is unreliable across screen readers. The
+          purpose line is the manifest's own wording, verbatim, so it says
+          exactly what the Hub's skill card says about the same skill.
+
+          A TAP DISMISSES IT, because a child who has read it should not have
+          to wait. The wrapper is pointer-events-none so the toast never
+          swallows a tap meant for the page around it; only the toast itself
+          is a target. */}
+      <div
+        role="status"
+        aria-live="polite"
+        className="pointer-events-none fixed inset-x-0 z-40 px-4"
+        style={{ bottom: 'calc(72px + max(8px, env(safe-area-inset-bottom)))' }}
+      >
+        {toasted && (
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            className="pointer-events-auto mx-auto flex w-full max-w-2xl animate-slide-up items-center gap-3 rounded-[18px] bg-cream p-3 text-left shadow-[0_18px_30px_-16px_rgba(26,35,126,0.6)]"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-turquoise-soft">
+              <SkillSymbol id={toasted.symbol} size={26} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex flex-wrap items-baseline gap-x-2">
+                <span className="font-display text-[19px] leading-6 text-indigo">
+                  {toasted.pup.name}
+                </span>
+                <span className="text-[13px] leading-4 font-bold text-navy/70">
+                  {toasted.name}
+                </span>
+              </span>
+              <span className="mt-0.5 block text-[13px] leading-4 text-navy/85">
+                {toasted.purpose}
+              </span>
+            </span>
+          </button>
+        )}
       </div>
 
       {/* THE CELEBRATION. Mounted only for the length of the burst, and
