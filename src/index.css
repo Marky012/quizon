@@ -73,6 +73,7 @@
   --animate-pup-tick: pup-tick-in 220ms ease-out both;
   --animate-confetti: confetti-fall 1.7s ease-in forwards;
   --animate-card-in: card-in 420ms cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
+  --animate-huddle-in: huddle-in 460ms cubic-bezier(0.34, 1.35, 0.64, 1) backwards;
   --animate-star-earn: star-earn 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
   --animate-pulse-badge: pulse-badge 1800ms ease-in-out infinite;
 
@@ -187,6 +188,34 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* THE HUDDLE ASSEMBLES. The eight helpers on the Welcome screen drop into
+   place like a team photo being taken: each tile rises, scales up from small
+   and lands with a few degrees of rotation, and the row staggers so the
+   huddle assembles left to right instead of all eight appearing at once.
+
+   THE ROTATION IS THE POINT. The tiles are already tilted into an arc by
+   their own transform, so a plain fade-up would land them in a tidy row and
+   throw away the huddle. Landing them at -4 degrees and letting the
+   transform settle to 0 reads as eight puppies scrambling into place.
+
+   `BACKWARDS` fill is what makes the stagger possible: it holds the `from`
+   state (opacity 0) during the delay, so a delayed tile is invisible rather
+   than briefly visible at full opacity and then popping. Welcome reads
+   useReducedMotion and does not apply this animation at all when motion is
+   reduced - the global rule in index.css collapses the DURATION but says
+   nothing about the DELAY, so a stagger would still leave eight gaps. */
+@keyframes huddle-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.82) rotate(-4deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0);
   }
 }
 

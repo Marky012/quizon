@@ -5,7 +5,7 @@
     <img src="public/assets/brand/quizon-logo.png" alt="QuizOn! logo" width="120" height="120">
   </a>
 
-  <h1 align="center">QuizOn! — The Quezon Challenge</h1>
+  <h1 align="center">QuizOn! — The Reading Quest</h1>
 
   <p align="center">
     <strong>Offline-first gamified reading app for Grade 5 learners</strong>
@@ -139,7 +139,8 @@ Boot → Welcome (choose a helper) → Profile (character + nickname) → Intro 
 
 ### <img src="images/icons/api-cloud.svg" width="20" height="20" valign="middle"/> PWA & Offline
 - **vite-plugin-pwa 1.3** + **Workbox** — `generateSW`, `autoUpdate`, `navigateFallback: '/index.html'`
-- Precaches **every** JS/CSS/HTML/SVG/PNG/JPG/WOFF2 chunk — 50 entries, ~10 MB
+- Precaches **every** JS/CSS/HTML/SVG/PNG/JPG/WOFF2 chunk — 48 entries, ~10.4 MB
+- **No `includeAssets`** — it and `globPatterns` once listed the same three files, and Workbox rejects a precache manifest with a duplicate URL. The install handler throws, the precache never runs, and the failure is invisible: the worker still activates and the app still works on wifi, but nothing is cached and an offline reload lands on nothing. If you add an asset, check its extension against `globPatterns` first.
 - **Web Audio API** oscillator synthesis for all sound effects — no audio files shipped
 
 ### <img src="images/icons/web-test.svg" width="20" height="20" valign="middle"/> Dev Tools & Testing
@@ -337,7 +338,7 @@ Built to be usable by the whole class, not just the fast readers.
 | Property | Value |
 |----------|-------|
 | Strategy | `generateSW` via `vite-plugin-pwa`, `registerType: 'autoUpdate'` |
-| Precache | **50 entries, ~10 MB** (`**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2,ico}`) |
+| Precache | **48 entries, ~10.4 MB** (`**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2,ico}`) |
 | Navigation fallback | `/index.html` — deep links resolve with no network |
 | Runtime cache | `NetworkFirst` for documents, `CacheFirst` for fonts |
 | Stale cache | `cleanupOutdatedCaches: true` |

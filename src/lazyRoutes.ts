@@ -177,6 +177,33 @@ const BY_PREFIX: ReadonlyArray<readonly [string, LazyRoute]> = [
 ]
 
 /**
+ * EVERY screen, in one list.
+ *
+ * The boot screen warms all of them up before the learner can navigate to any
+ * of them, which is the whole point: the per-screen skeletons in
+ * components/RouteFallback.tsx exist because a chunk can arrive after the
+ * learner has already tapped. If the chunk is already here, the skeleton
+ * never appears, and the boot screen is the only loading state the child ever
+ * sees.
+ *
+ * Order does not matter - every fetch starts at once.
+ */
+export const ALL_ROUTES: readonly LazyRoute[] = [
+  WelcomeRoute,
+  ProfileRoute,
+  IntroRoute,
+  HubRoute,
+  SkillsRoute,
+  SkillLessonRoute,
+  PreTestRoute,
+  ArenaRoute,
+  QuizRoute,
+  ResultRoute,
+  RecordRoute,
+  SettingsRoute,
+]
+
+/**
  * Fetch the chunk for a destination the learner has not navigated to yet.
  *
  * Called on pointer-enter and focus from the hub and arena cards. A child takes
