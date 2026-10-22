@@ -503,6 +503,29 @@
 
 @layer components {
 
+  /* THE PUP BENCH GROUND AT lg. The image is 3168x1344 (2.36:1). Stretched to
+     the full width it is an 815px green wall at 1920; held at 896px it is a
+     hard-edged island on the backdrop lawn. So from lg the bench is a short
+     full-width band and this repeats the one image sideways: every tile is
+     scaled by the band's height, so the ragged blade tips stay ragged instead
+     of being squashed into a straight edge.
+
+     `auto 126%` IS A TRANSPARENT-SKY CROP, NOT AN ART CROP. The image's top
+     20.6% is empty sky, so at 100% the band spent its top ~50px on nothing and
+     the pup names sat over the village behind it. 126% makes the image 1.26x
+     the band tall, so the band crops exactly that empty sky: the tallest blade
+     row, 20.6% down the file, is where the band starts. Nothing drawn is cut.
+     Bottom-anchored so the dogs' paws keep landing on the same soil row they
+     stand on at 360px. */
+  @media (min-width: 64rem) {
+    .pup-bench-grass {
+      background-image: url('/assets/world/grass.png');
+      background-repeat: repeat-x;
+      background-position: bottom center;
+      background-size: auto 126%;
+    }
+  }
+
   /* The primary button. RESET DESIGN 2026-10-06: the old 3px indigo outline
      plus a 3px navy hard edge plus a white inset read as a heap of outlines,
      and every control in the app carried it. The button is now a borderless

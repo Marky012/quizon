@@ -28,8 +28,10 @@ import { useGameStore } from '@/store/gameStore'
    look abandoned. Every dog is still there; the colour difference is the
    progress story the roster used to tell.
 
-   THE GRASS IS ONE UNMODIFIED IMAGE, drawn at full container width. No crop, no
-   gradient layer, no background-size pinning, no second file.
+   THE GRASS IS ONE UNMODIFIED IMAGE. Below lg it is drawn at full container
+   width, in its own aspect ratio, with no crop, gradient or second file. At lg
+   the same file tiles sideways inside a short full-width band - see the section
+   element for why.
 
    MOBILE-FIRST, AND THE DOGS ARE MEANT TO TOUCH. The layout is designed at 360px
    and grows: eight flex-1 columns across the full container width, each 45px,
@@ -69,22 +71,6 @@ import { useGameStore } from '@/store/gameStore'
  *  obviously moving. */
 const TICK_MS = 1400
 
-/* Percentage of the SECTION height, measured up from its bottom edge, where the
-   dogs' paws land. The grass image has transparent sky above 80%, a ragged blade
-   band from 64% to 80%, and solid soil below 64%. So:
-
-   - a value under 64 puts the paws on solid soil, with the blades rising behind
-     the dogs rather than under them, which is what a standing animal looks like.
-   - a value over 64 puts the paws in the blades and the dogs appear to be
-     floating in the grass.
-   - a value over 80 puts them in the transparent sky above the artwork.
-
-   35% is deliberately below the blade band: the dogs stand ON the ground and the
-   grass stands behind them. Lowering it moves both the dogs and their names
-   down together, because they share this one anchor. The overhang above the
-   image shrinks as this falls, so mt-16 on the section stays generous. */
-const PUP_GROUND = '35%'
-
 export function PupBench() {
   const skills = useGameStore((s) => s.skills)
   const earnedById = useMemo(
@@ -107,34 +93,46 @@ export function PupBench() {
   }, [])
 
   return (
-    /* CENTERED AND CAPPED. Without the cap the image ran the full viewport
-       width, so on a 1920px monitor the footer became a 815px-tall green wall
-       and the eight dogs were spread across a field the width of a car. The cap
-       is the same max-w-4xl the carousel uses, so the grass, the cards and the
-       header all share one edge.
+    /* A CAPPED ISLAND ON A PHONE AND TABLET, A FULL-WIDTH GROUND ON A DESKTOP.
+
+       Below lg the image is the layout: w-full + h-auto gives the strip its own
+       aspect (153px at 360px wide) inside the max-w-4xl the carousel uses, so a
+       tablet gets an island with the pack standing on it.
+
+       AT lg THE ISLAND READ AS A STICKER. A 896px rectangle of brighter green
+       floating on the backdrop lawn, hard cut down both sides. Filling the width
+       with the image at its own ratio is not an option either: at 1920 the strip
+       is 815px tall, which is the green wall this bench was capped to avoid. So
+       the last version keeps the one image and TILES it sideways - .pup-bench-
+       grass in index.css repeats it inside a band whose height comes from the
+       viewport, not the width. The tile is drawn at 126% of the band, which is
+       exactly the image's transparent sky, so the band's top edge lands on the
+       first blade row and nothing drawn is cut: the grass meets the backdrop in
+       blades, not in a line.
 
        mt-16 is NOT decoration. Worked out for the 360px case, where the grass
-       is 360 * 1344/3168 = 153px tall: PUP_GROUND puts the block's baseline at
-       84px, the block itself is about 130px (112px of dog + 18px of name), so
-       its top sits at 214px - roughly 61px ABOVE the top of the image. That
-       overhang would otherwise collide with the carousel. Margin is outside the
-       containing block, so it reserves the space without changing what
-       PUP_GROUND resolves against, which is what padding would have done.
+       is 360 * 1344/3168 = 153px tall: the 35% paws line puts the block's
+       baseline at 84px, the block itself is about 130px (112px of dog + 18px of
+       name), so its top sits at 214px - roughly 61px ABOVE the top of the
+       image. That overhang would otherwise collide with the carousel. Margin is
+       outside the containing block, so it reserves the space without changing
+       what the paws line resolves against, which is what padding would have
+       done.
 
        On desktop the same 64px reads as a gap between the carousel and the
-       grass, because there the image is 380px tall and the block sits entirely
-       inside it. */
+       grass, because there the image is taller than the block. */
     <section
       aria-label="Your pups"
-      /* THE GRASS WIDTH IS ALSO ITS HEIGHT. The image keeps its aspect ratio, so
-         capping the container at max-w-4xl was really a 380px-tall cap - taller
-         than a 1024x768 laptop has room for once the header and the carousel are
-         placed. Tying the width to the viewport height (80vh => 614px wide and
-         260px tall at 768) shrinks the whole bench proportionally instead of
-         cropping it, so the dogs keep standing on the same blades at every size.
-         Only from lg: on a phone the grass is the page's last surface and the
-         page scrolls to it. */
-      className="relative mx-auto mt-16 w-full max-w-4xl select-none lg:mt-2 lg:w-[min(896px,80vh)]"
+      /* overflow-x-clip IS LOAD-BEARING ON A PHONE. The eight columns are
+         narrower than the 112px dogs, so the first and last dog hang past the
+         section edge by ~32px. That widened the DOCUMENT by 32px, and mobile
+         Chrome answered by shrinking the page to fit: the layout viewport grew
+         from 844 to 914 while dvh stayed 844, so the page could scroll 70px
+         past the grass and showed a blank strip where the footer should be.
+         Clipping x - not overflow-x-hidden, which would also force y to scroll
+         and cut the names' overhang - puts the document back at viewport width.
+         From lg the columns are 112px wide, so nothing hangs out. */
+      className="pup-bench-grass relative mx-auto mt-16 w-full max-w-4xl select-none overflow-x-clip lg:mt-2 lg:h-[clamp(280px,26vh,380px)] lg:max-w-none"
     >
       <img
         src="/assets/world/grass.png"
@@ -142,8 +140,10 @@ export function PupBench() {
         aria-hidden="true"
         /* w-full + h-auto is the entire layout instruction: the image fills the
            container width and keeps its own aspect ratio, so nothing is cropped,
-           squashed or letterboxed at any screen size. */
-        className="block h-auto w-full"
+           squashed or letterboxed. At lg the section draws this same file as a
+           tiled, bottom-anchored background instead (see the section), so the
+           <img> steps aside - one grass, never two. */
+        className="block h-auto w-full lg:hidden"
         /* Not lazy: this is the visual footer of the landing screen and the
            largest asset in the app. decoding="async" keeps the main thread free
            for the carousel while it decodes. */
@@ -152,7 +152,29 @@ export function PupBench() {
 
       {/* ONE BLOCK, TWO ROWS. Pinned at the paws line, names first then dogs, so
           the names are always above the dogs' heads at every container width. */}
-      <div className="absolute inset-x-0" style={{ bottom: PUP_GROUND }}>
+      {/* where the paws land, as a percentage of the section height measured
+          up from its bottom edge, and the reason there are two numbers.
+
+          IN THE FILE the sky above the blades is transparent (top 20%), the
+          ragged blade band runs 20%-40% down, and the soil is the rest. So a
+          paws line in the soil puts the dogs ON the ground with the blades
+          rising behind them; a line in the blade band reads as floating in the
+          grass; a line in the sky puts them above the artwork.
+
+          BELOW lg the image IS the section: at 360px wide, 35% is 54px up into
+          the soil for the paws, and the names sit 61px above the artwork.
+          AT lg the section is a short full-width band, and at 35% the muted
+          names landed on the backdrop above the band. 20% of a 280px band
+          keeps the paws on soil and drops both rows into the opaque half of
+          the grass. The two rows move together, which is the point of them
+          sharing one anchor.
+
+          THE PACK ALSO STAYS CAPPED ON DESKTOP. The grass now runs the full
+          width, but eight dogs across 1920 would be a row of separated figures
+          - the exact failure this bench exists to avoid. The block keeps the
+          same 896px cap as the cards, centred, so the pack is a huddle with
+          lawn either side. */}
+      <div className="absolute inset-x-0 bottom-[35%] lg:mx-auto lg:max-w-4xl lg:bottom-[20%]">
         {/* THE NAMES - the self-spotlight. Exactly one name carries the glass
             pill; it is a size up and does not truncate, so it can wash over its
             narrow 45px column and the neighbours beside it, which is what makes
@@ -178,11 +200,15 @@ export function PupBench() {
                   </span>
                 ) : (
                   <span
-                    className="max-w-full truncate px-0.5 font-display text-[14px] leading-4 text-navy/45"
+                    className="max-w-full truncate px-0.5 font-display text-[14px] leading-4 text-navy/55"
                     style={{
-                      /* The muted label over mid-green blades needs the same
-                         legibility shadow the old cream chips used to supply. */
-                      textShadow: '0 1px 0 rgb(255 253 244 / 0.75)',
+                      /* The label now sits on open grass instead of a narrow
+                         island, so 45% ink plus a 1px drop shadow washed out.
+                         A tight cream glow rather than a keyline: at 14px a
+                         hard outline reads as a sticker, a soft one just lifts
+                         the name off blades, soil and the backdrop. */
+                      textShadow:
+                        '0 1px 0 rgb(255 253 244 / 0.95), 0 0 3px rgb(255 253 244 / 0.9)',
                     }}
                   >
                     {skill.pup.name}

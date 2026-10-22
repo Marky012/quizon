@@ -141,7 +141,7 @@ export function Hub() {
        point of the bench, could not be seen at all. Fixing the height to the
        glass and letting main flex (below) puts the grass on the bottom edge and
        keeps the names in view; the card and grass shrink to fit - see
-       StageCarousel's --card-h and PupBench's lg width. */
+       StageCarousel's --card-h and PupBench's lg band. */
     <div className="flex min-h-dvh flex-col lg:h-dvh">
       {/* --- Header: logo left, wordmark centred, settings right -------------
            NO SURFACE. This used to be an opaque cream bar with a navy rule and a
