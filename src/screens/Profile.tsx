@@ -50,8 +50,8 @@ import { useGameStore, type PlayerGender } from '@/store/gameStore'
    =========================================================================== */
 
 const CHARACTERS: ReadonlyArray<{ id: PlayerGender; label: string; src: string }> = [
-  { id: 'girl', label: 'Girl', src: '/assets/players/girl.svg' },
-  { id: 'boy', label: 'Boy', src: '/assets/players/boy.svg' },
+  { id: 'girl', label: 'Girl', src: '/assets/players/girl.png' },
+  { id: 'boy', label: 'Boy', src: '/assets/players/boy.png' },
 ]
 
 /** First name and last name. A single word is not an identification. */

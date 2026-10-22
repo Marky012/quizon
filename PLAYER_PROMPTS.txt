@@ -1,0 +1,308 @@
+================================================================================
+PLAYER ICON PROMPTS - GENDER SELECTION (BOY / GIRL)
+Two bust icons for the Profile screen's "Who are you?" panel.
+================================================================================
+
+WHY THIS FILE EXISTS
+--------------------
+The two player icons in public/assets/players/ are the only character art in
+this product that does NOT follow the art bible. Everything else - the eight
+pups, the brand mark, the level cards - is flat 2D vector with a bold 3px navy
+outline and a closed nine-colour palette. boy.svg and girl.svg were drawn
+earlier, by hand, in a different style:
+
+  - No outline at all. The shapes are separated by value, which is why the
+    girl reads as a pink blob on a cream card and the boy as a brown blob.
+  - Off-palette skin (#f7c193), hair (#4a2c1a), blush (#ff9bb0) and pure white
+    eye dots, applied over off-palette turquoise and coral.
+  - A perfectly circular head, which is a helmet, not a child.
+
+The design principles the rest of the product holds to are stated in
+src/index.css (the token block) and in PUP_PROMPTS.txt (the set contract).
+This file applies the same rules to the two player icons, so the pupil's own
+face belongs to the same world as the eight dogs that teach them.
+
+WHAT THESE ICONS HAVE TO DO
+----------------------------
+  1. THEY ARE READ AT TWO SIZES. 120px in the picker card, 72px inline next to
+     the name field. So they are BUSTS - head and shoulders - and not full
+     body figures. A full body figure at 72px is a torso with no face on it.
+  2. THEY MUST BE DISTINGUISHABLE WITHOUT COLOUR. The product rule is "never
+     colour alone" (README, Accessibility). So the boy and the girl are
+     separated by HAIR SILHOUETTE first and shirt colour second. If you grey
+     the two icons out and swap the shirts, they must still read as different.
+  3. THEY ARE NOT THE PUPS. The pupils are dogs in caps and vests. These two
+     are children, plain, with no hat, no prop, no toy, no accessory beyond
+     the girl's hair ties. Anything else on the head would fight the hair
+     silhouette, which is the thing doing the identifying.
+  4. THEY ARE FILLED IN BY CODE, NOT BY THE IMAGE. No writing, no badge, no
+     letter, no number anywhere - not on the shirt either.
+
+================================================================================
+HOW TO USE
+================================================================================
+  1. Paste ONE block into your image generator. One icon at a time, never
+     both in one image.
+  2. Save the result under the SAVE AS name in that block's header.
+  3. Run it against MUST PASS at the bottom before you accept it. If it
+     fails, re-roll. Do not patch it by hand.
+  4. Generate the boy and the girl with the SAME seed and the SAME settings
+     if your tool allows it. The two must be the same drawing with two
+     different heads on top, not two different drawings.
+
+  OUTPUT FORMAT: a square vector with a 0 0 200 200 viewBox and a fully
+  transparent background, OR a 512x512 PNG with a transparent background.
+  The SVG drops straight into the code as-is. A PNG needs one edit: the two
+  paths in src/screens/Profile.tsx (the CHARACTERS array) change .svg to .png.
+
+  THE SHIPPED ART IS PNG, AND THE EXTENSION MUST MATCH THE CONTENT. The two
+  icons in public/assets/players/ are 512x512 PNGs and the code asks for
+  .png. Do NOT save a PNG under a .svg name: a PNG that is called an SVG is
+  served with the wrong Content-Type, and the next person to open the file
+  finds a PNG header where an <svg> tag should be.
+
+================================================================================
+THE SET CONTRACT - READ THIS ONCE, IT IS THE SAME FOR BOTH ICONS
+================================================================================
+
+CANVAS AND FRAMING - THE PART THAT IS HARD TO GET RIGHT
+  A square canvas, viewBox 0 0 200 200, straight-on eye-level view, dead
+  symmetrical. The child faces the viewer directly. The head is centred
+  horizontally at x = 100 and sits high in the frame, occupying roughly the
+  top 55% of the height. The head is BIG - about 100 units across - because
+  the icon is read at 72px and a small head vanishes. The neck and the
+  shoulders enter from the bottom edge and are CROPPED by it. You see the
+  head, the neck, the shoulders and the top of the shirt. You do NOT see the
+  body, and you do NOT see arms below the shoulder line.
+
+FACE
+  A child's face, not an adult's and not a baby caricature. Large round
+  friendly eyes with big dark navy pupils and ONE small white highlight dot
+  in each eye. Simple round nose. A small closed smile with rounded ends.
+  Two soft round blush ovals on the cheeks. Eyebrows are optional; if they
+  appear they are short, soft and curved, never angled. The expression is
+  calm, friendly and slightly curious.
+
+OUTLINE - THIS IS THE STYLE, DO NOT SKIP IT
+  A bold 3px dark navy #1A2B4C outline on EVERY contour: the hair, the face,
+  the ears, the neck, the shoulders, the shirt, and every interior line -
+  the smile, the nose, the eyelids, the hair parting - at the same 3px
+  weight. Every corner in the drawing is ROUNDED. No sharp corners anywhere,
+  not in the hair, not in the shirt, not in the shoulders.
+
+STYLE
+  Flat 2D vector illustration for a children's educational reading game.
+  Chunky rounded shapes. Flat solid fills only: no gradients, no shading, no
+  glow, no rim light, no soft blur, no texture, no drop shadow on the
+  outline. No background of any kind - the card behind the icon supplies it.
+
+PALETTE - THE GAME'S NINE VALUES, PLUS FOUR HUMAN VALUES
+  The game palette is exactly nine values and nothing else: cream #FFFDF4,
+  indigo #1A237E, navy #1A2B4C, turquoise #00D2C4, deep turquoise #00A396,
+  lime #4BD37B, coral #FF5E62, yellow #FFD13B, violet #7B61FF.
+
+  A child needs a skin tone and a hair colour and the nine game values do
+  not contain either, so the human figures use four MORE values and no
+  others: skin #F7C193, hair #4A2C1A, blush #FF9BB0, and pure white #FFFFFF
+  used ONLY for the single small highlight dot in each eye and nowhere else
+  in the image. The skin tone is a warm tan, the skin tone of a child in
+  the Caraga region, and it is the same tan in both icons.
+
+  The boy wears turquoise #00D2C4 and the girl wears coral #FF5E62, matching
+  the two icons already in the product, so the picker card and the shirt
+  stay in step with the rest of the app.
+
+================================================================================
+BOY - MALE PLAYER - turquoise #00D2C4 shirt
+SAVE AS: public/assets/players/boy.png
+================================================================================
+<<<PASTE>>>
+SUBJECT: an original flat 2D vector illustration of a Filipino boy about ten
+years old, seen as a head-and-shoulders bust facing the viewer directly. He
+has short neat cropped hair in dark brown #4A2C1A with a small straight
+fringe across his forehead, warm tan skin #F7C193, large round friendly eyes
+with dark navy #1A2B4C pupils and one small white highlight dot in each eye,
+a simple round nose, a small closed smile with rounded ends, and two soft
+round blush ovals #FF9BB0 on his cheeks. He wears a plain turquoise #00D2C4
+shirt with no writing and no pattern on it. He is calm, friendly and slightly
+curious.
+
+ANATOMY LOCK, THIS IS THE MOST IMPORTANT LINE: the figure is a HEAD AND
+SHOULDERS BUST ONLY. You see the head, the ears, a short neck, the shoulders
+and the top of the shirt, and the shoulders are cropped by the bottom edge of
+the canvas. There is exactly one head and exactly one pair of shoulders. No
+full body. No torso below the chest. No arms, no forearms, no elbows, no
+hands, no fingers, no thumbs, no wrists, no legs. Do not add a hand resting
+on the bottom edge or a sleeve cuff that turns into an arm. The face is
+perfectly symmetrical: two eyes of the same size, two ears of the same size,
+one nose, one mouth, and the head is straight, not tilted.
+
+HIS HAIR: short and neat, cropped close to the head, dark brown #4A2C1A,
+with one short straight fringe across the forehead. The hair silhouette is
+compact and rounded, sitting close to the skull. It is NOT spiky, NOT
+swept, NOT long, and there are no buns, no pigtails, no ponytail and no
+hair ties. The hair must read as clearly SHORT from the silhouette alone.
+
+CLOTHING: a plain turquoise #00D2C4 shirt with a simple rounded collar and
+no writing, no number, no badge, no logo, no pocket, no buttons, no stripes
+and no pattern. The collar is a simple rounded band, never a sharp V.
+
+STYLE: flat 2D vector illustration for a children's educational reading game,
+chunky rounded shapes, bold 3px dark navy #1A2B4C outline on every contour
+including the hair, the face, the neck, the shoulders, the shirt and the
+collar, and every interior line drawn at the same 3px weight as the outline.
+Flat solid fills only: no gradients, no shading, no glow, no rim light, no
+soft blur, no texture. Every corner is rounded, there are no sharp corners
+anywhere in the drawing.
+
+PALETTE: colour is limited to exactly these thirteen values and nothing else:
+cream #FFFDF4, indigo #1A237E, navy #1A2B4C, turquoise #00D2C4, deep
+turquoise #00A396, lime #4BD37B, coral #FF5E62, yellow #FFD13B, violet
+#7B61FF, skin #F7C193, hair #4A2C1A, blush #FF9BB0, white #FFFFFF. Use no
+other hue, tint or shade. White appears ONLY as the single small highlight
+dot in each eye and nowhere else.
+
+TECHNICAL: straight-on eye-level view, head centred horizontally at x = 100
+and sitting high in the frame with the head about 100 units across, the
+shoulders cropped by the bottom edge of the canvas, generous empty margin on
+the left and right, fully transparent background.
+
+MUST NOT CONTAIN: no text, letters, numbers, words or writing of any kind
+anywhere in the image, including on the shirt; no arms, hands, fingers,
+thumbs, wrists or elbows; no full body, no legs, no second head, no second
+person; no hat, cap, helmet, headband, glasses, earrings, scarf or any
+headwear; no toy, ball, book, backpack, badge, medal or any prop; no
+spiky hair, no long hair, no buns, no pigtails, no ponytail; no gradient, no
+shading, no glow, no rim light, no soft blur, no drop shadow on the outline,
+no coloured or scenic background, no circular background plate; no thin
+outlines, no broken outline on any contour; no sharp corners on any shape; no
+photorealism, no 3D render, no anime or manga; no watermark, no signature, no
+logo; only one child in the image.
+<<<END>>>
+
+
+================================================================================
+GIRL - FEMALE PLAYER - coral #FF5E62 shirt
+SAVE AS: public/assets/players/girl.png
+================================================================================
+<<<PASTE>>>
+SUBJECT: an original flat 2D vector illustration of a Filipino girl about ten
+years old, seen as a head-and-shoulders bust facing the viewer directly. She
+has long dark brown #4A2C1A hair that falls to her shoulders in one smooth
+rounded shape, with one small round side bun at each temple tied with a yellow
+#FFD13B band, warm tan skin #F7C193, large round friendly eyes with dark navy
+#1A2B4C pupils and one small white highlight dot in each eye, a simple round
+nose, a small closed smile with rounded ends, and two soft round blush ovals
+#FF9BB0 on her cheeks. She wears a plain coral #FF5E62 shirt with no writing
+and no pattern on it. She is calm, friendly and slightly curious.
+
+ANATOMY LOCK, THIS IS THE MOST IMPORTANT LINE: the figure is a HEAD AND
+SHOULDERS BUST ONLY. You see the head, the ears, a short neck, the shoulders
+and the top of the shirt, and the shoulders are cropped by the bottom edge of
+the canvas. There is exactly one head and exactly one pair of shoulders. No
+full body. No torso below the chest. No arms, no forearms, no elbows, no
+hands, no fingers, no thumbs, no wrists, no legs. Do not add a hand resting
+on the bottom edge or a sleeve cuff that turns into an arm. The face is
+perfectly symmetrical: two eyes of the same size, two ears of the same size,
+one nose, one mouth, and the head is straight, not tilted.
+
+HER HAIR: long and dark brown #4A2C1A, falling past the jaw to the
+shoulders in one smooth rounded shape, with ONE small round side bun at
+each temple - two buns in total, one on the left and one on the right - each
+tied with a simple yellow #FFD13B band. The hair silhouette is WIDE and
+long, and it is what separates this icon from the boy's at a glance. No
+ponytail, no braid, no fringe, no spiky hair, no high topknot, and no
+additional hair ties or ribbons anywhere else.
+
+CLOTHING: a plain coral #FF5E62 shirt with a simple rounded collar and no
+writing, no number, no badge, no logo, no pocket, no buttons, no stripes
+and no pattern. The collar is a simple rounded band, never a sharp V.
+
+STYLE: flat 2D vector illustration for a children's educational reading game,
+chunky rounded shapes, bold 3px dark navy #1A2B4C outline on every contour
+including the hair, the buns, the face, the neck, the shoulders, the shirt
+and the collar, and every interior line drawn at the same 3px weight as the
+outline. Flat solid fills only: no gradients, no shading, no glow, no rim
+light, no soft blur, no texture. Every corner is rounded, there are no sharp
+corners anywhere in the drawing.
+
+PALETTE: colour is limited to exactly these thirteen values and nothing else:
+cream #FFFDF4, indigo #1A237E, navy #1A2B4C, turquoise #00D2C4, deep
+turquoise #00A396, lime #4BD37B, coral #FF5E62, yellow #FFD13B, violet
+#7B61FF, skin #F7C193, hair #4A2C1A, blush #FF9BB0, white #FFFFFF. Use no
+other hue, tint or shade. White appears ONLY as the single small highlight
+dot in each eye and nowhere else.
+
+TECHNICAL: straight-on eye-level view, head centred horizontally at x = 100
+and sitting high in the frame with the head about 100 units across, the
+shoulders cropped by the bottom edge of the canvas, generous empty margin on
+the left and right, fully transparent background.
+
+MUST NOT CONTAIN: no text, letters, numbers, words or writing of any kind
+anywhere in the image, including on the shirt; no arms, hands, fingers,
+thumbs, wrists or elbows; no full body, no legs, no second head, no second
+person; no hat, cap, helmet, headband, glasses, earrings, scarf, necklace or
+any headwear; no toy, doll, book, backpack, badge, medal or any prop; no
+ponytail, no braid, no fringe, no spiky hair, no more than two hair buns, no
+ribbons on the shirt; no gradient, no shading, no glow, no rim light, no soft
+blur, no drop shadow on the outline, no coloured or scenic background, no
+circular background plate; no thin outlines, no broken outline on any
+contour; no sharp corners on any shape; no photorealism, no 3D render, no
+anime or manga; no watermark, no signature, no logo; only one child in the
+image.
+<<<END>>>
+
+
+================================================================================
+MUST PASS - CHECK BOTH FILES BEFORE YOU ACCEPT THEM
+================================================================================
+  1. NO WRITING ANYWHERE. Check the shirt especially. One letter fails it.
+  2. THE OUTLINE IS ON EVERY CONTOUR - hair, ears, jaw, neck, shoulder, shirt
+     and collar. If you can trace a shape that has no navy line around it, it
+     fails.
+  3. THE OUTLINE IS 3PX AND UNBROKEN. No thin lines, no gaps at the collar,
+     no gaps where the hair meets the shoulder.
+  4. FLAT FILLS ONLY. Turn off colour and the image should be a set of solid
+     shapes with clean edges, not a picture with light on it.
+  5. TRANSPARENT BACKGROUND. Put it on a checkerboard. Any white or coloured
+     field behind the figure fails it, because the picker card paints its own
+     cream or turquoise behind the icon.
+  6. IT IS A BUST. Head, neck, shoulders, cropped at the bottom edge. No
+     hands, no arms, no full body.
+  7. THE FACE IS SYMMETRICAL AND THE HEAD IS THE SAME SIZE IN BOTH ICONS.
+     Overlay the two. The heads must line up and the eye line must be at the
+     same height in both, or the picker cards will look broken.
+  8. AT 72PX, THE FACE STILL READS: two eyes, a nose, a mouth. If the eyes
+     are gone, the head is too small.
+  9. GREYSCALE TEST. Desaturate both icons and swap the shirts. They must
+     still be obviously different, because the girl is told apart by her hair
+     and not by her coral shirt.
+ 10. BOY AND GIRL ARE NOT MIRRORED COPIES. Same drawing, same pose, same
+     camera, different hair and different shirt colour.
+ 11. NO SHARP CORNERS ANYWHERE.
+ 12. THE ICON STILL READS AT 120px AND AT 72px. Check both sizes.
+
+================================================================================
+NOTES
+================================================================================
+  - NO SELECTED-STATE ART. The picker draws the selection itself: a
+    turquoise card, a 4px yellow ring and a navy check badge in the corner
+    (src/screens/Profile.tsx). A second pair of "selected" icons would
+    duplicate that and drift out of step with the ring.
+  - NO LABEL ART. The word "Boy" or "Girl" is set in Baloo 2 in the code
+    under the icon, and the button carries an aria-label. The picture is not
+    the only channel.
+  - IF THE TOOL WILL NOT OUTPUT A TRANSPARENT BACKGROUND, cut the figure out
+    by hand and keep the alpha. A white rectangle behind a cream-shirted
+    child on a cream card is invisible, and this is the same failure Franky
+    the Pug has.
+  - THE ICONS ARE SAVED OVER THE TWO EXISTING FILES. The new art has a navy
+    outline and the old art did not, so the picker will look noticeably
+    crisper. That is the point.
+  - A DARKER SKIN TONE is a two-value edit and nothing else: replace skin
+    #F7C193 in both blocks, and nothing else changes. The two icons must
+    always use the SAME skin tone as each other, whatever it is.
+  - The store calls these 'boy' and 'girl' (src/store/gameStore.ts,
+    PlayerGender) and the sync payload deliberately does NOT carry the
+    choice off the device. Nothing in this file changes that.
+================================================================================

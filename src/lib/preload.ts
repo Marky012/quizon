@@ -81,8 +81,8 @@ const ART: readonly string[] = [
   '/assets/levels/easy.png',
   '/assets/levels/medium.png',
   '/assets/levels/hard.png',
-  '/assets/players/boy.svg',
-  '/assets/players/girl.svg',
+  '/assets/players/boy.png',
+  '/assets/players/girl.png',
   ...Object.keys(PUP_BY_ID).map((id) => `/assets/pups/${id}-avatar.png`),
 ]
 
