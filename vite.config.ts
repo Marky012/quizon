@@ -10,9 +10,38 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['assets/favicon.svg', 'assets/brand/*.svg', 'assets/brand/*.png', 'assets/fx/*.svg'],
+      // NO includeAssets. IT USED TO BE HERE AND IT BROKE THE OFFLINE BUILD
+      // SILENTLY, and that is worth writing down.
+      //
+      // includeAssets and globPatterns were both listing the same files:
+      // `assets/favicon.svg`, `assets/brand/logo-mark.svg` and
+      // `assets/brand/quizon-logo.png`. The precache manifest ended up with
+      // each of those TWICE - once with a null revision from globPatterns and
+      // once with a content revision from includeAssets.
+      //
+      // Workbox refuses a cache list with two entries for the same URL. It
+      // throws `add-to-cache-list-conflicting-entries` inside the install
+      // handler, the install promise rejects, and the precache never runs.
+      //
+      // THE FAILURE LOOKED FINE. The service worker still activated, the page
+      // still controlled, the app still worked on wifi - and the browser
+      // console showed the rejection as a single "Uncaught (in promise)"
+      // line that scrolls past in half a second. The observable symptom was
+      // `caches.keys()` returning an empty list forever, and an offline
+      // reload landing on nothing at all. "Offline-first" was the one claim
+      // this app could not keep, and it failed silently.
+      //
+      // includeAssets IS REDUNDANT HERE ANYWAY: every file it named is
+      // already matched by globPatterns below, because they all live in
+      // public/ and are copied into dist/ where the glob sees them.
+      //
+      // IF YOU EVER ADD A FILE HERE, CHECK THE EXTENSION AGAINST
+      // globPatterns FIRST. An asset whose extension is not in that list will
+      // not be precached, and adding it to includeAssets is safe ONLY while
+      // no glob matches it - a file that both match will break the install
+      // again, exactly as it did.
       manifest: {
-        name: 'QuizOn! - The Quezon Challenge',
+        name: 'QuizOn! - The Reading Quest',
         short_name: 'QuizOn!',
         description:
           'The offline-first game for Grade 5 learners in Barangay Quezon, Tagbina. Learn, earn your Woof helpers, and take on the challenge.',
