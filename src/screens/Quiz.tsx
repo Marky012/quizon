@@ -404,7 +404,7 @@ export function Quiz() {
             </div>
           </div>
 
-          <TeacherNote emotion="hint" tone="yellow" size={104}>
+          <TeacherNote emotion="hint" tone="yellow" size={128}>
             <p role="status" className="text-[15px] font-medium leading-relaxed text-indigo">
               {lockNote}
             </p>
@@ -588,7 +588,7 @@ export function Quiz() {
           </ul>
 
           {hintable.length === 0 && (
-            <TeacherNote emotion="support" tone="yellow" size={96}>
+            <TeacherNote emotion="support" tone="yellow" size={120}>
               <p className="text-[14px] font-medium leading-relaxed text-indigo">
                 You have not earned a helper yet. Get all {PRETEST_QUESTION_COUNT} right on a skill
                 check in Woof School!

@@ -24,4 +24,6 @@ export const ROADMAP = [
   'Music volume slider',
   'Teacher feedback',
   'More reading passages',
+  'Bigger text size',
+  'Profile photo',
 ]

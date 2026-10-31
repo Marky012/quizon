@@ -274,7 +274,7 @@ export function QuestionCard({
           <TeacherNote
             emotion={verdict.correct ? 'happy' : 'support'}
             tone={verdict.correct ? 'lime' : 'yellow'}
-            size={96}
+            size={120}
           >
             {verdict.correct ? (
               <div>

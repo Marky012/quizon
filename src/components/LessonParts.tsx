@@ -96,7 +96,7 @@ export function TeacherNote({
   children,
   emotion = 'idle',
   tone = 'turquoise',
-  size = 120,
+  size = 144,
   className = '',
 }: {
   children: ReactNode
