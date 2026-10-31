@@ -11,7 +11,7 @@ type SymbolId = (typeof SYMBOL_IDS)[number]
 
    2px navy stroke, 24x24 viewBox, rounded caps and joins, no fill. The same
    glyph appears on the skill card, the lesson header, the statistics breakdown
-   and the printed report, and that reuse is what makes it read as designed.
+   and the record, and that reuse is what makes it read as designed.
 
    These are drawn inline rather than loaded as a sprite sheet because they are
    needed on first paint of the welcome screen, and a sprite fetch there would

@@ -8,7 +8,7 @@ import { SPECIES_NAME } from '@/content/schemas'
 import { TIER_ORDER, WORLD, type TierId } from '@/content/world'
 import { MAX_ATTEMPTS, PASSING_SCORE, TIERS } from '@/constants/gameConfig'
 import { attemptsLeft, isPassing } from '@/logic/scoring'
-import { accentSoftVar } from '@/lib/accents'
+import { accentGlowVar } from '@/lib/accents'
 import { useAppBack } from '@/lib/appBack'
 import { useReducedMotion } from '@/lib/useReducedMotion'
 import {
@@ -428,33 +428,31 @@ export function SkillsFallback() {
       wide
     >
       <SpokenNote />
-      <ul className="grid grid-cols-2 items-start gap-x-3 gap-y-8 pt-8" aria-hidden="true">
+      <ul className="grid grid-cols-2 items-start gap-x-3 gap-y-11 pt-9" aria-hidden="true">
         {SKILLS.map((skill) => (
           <li key={skill.id}>
             <div className="relative">
-              {/* Floating pup name, mirroring the real one: a glass pill above the
-                  top edge, right-aligned, outside the card. */}
-              <span className="absolute right-2 -top-6 z-20 block rounded-[9px] bg-cream/60 px-2 py-0.5 shadow-[inset_0_2px_0_0_rgb(255_255_255/0.3)]">
-                <Skeleton w={56} h={16} tone="light" />
+              {/* Floating pup name, mirroring the real one: a frosted chip above
+                  the top edge, right-aligned, outside the card. */}
+              <span className="absolute right-1 -top-[30px] z-20 block rounded-pill bg-white/85 py-[3px] pl-2 pr-2.5 ring-1 ring-indigo/10">
+                <Skeleton w={52} h={16} tone="light" />
               </span>
               <div
-                className="skill-surface flex flex-col px-2 pb-2 pt-2"
-                style={{ '--skill-glow': accentSoftVar(skill.pup.accent) } as CSSProperties}
+                className="school-card flex flex-col p-2.5 sm:p-3"
+                style={{ '--skill-accent': accentGlowVar(skill.pup.accent) } as CSSProperties}
               >
-                <div className="flex items-stretch gap-1.5">
-                  <div className="flex w-[76px] shrink-0 flex-col items-center">
-                    <span className="relative z-20 -mt-8 block">
-                      <Skeleton w={76} h={76} radius="avatar" tone="dark" />
-                    </span>
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col items-start pt-0.5">
-                    {/* The name reserves a fixed two-line slot (line-clamp-2 +
-                        min-h-[42px]), so it is two 21px lines: h = (42 - 8) / 2
-                        = 17. The pup name moved outside the card (the bar
-                        above); the 28px tile stands in for the accordion
-                        button directly beneath the name. */}
-                    <SkeletonLines lines={2} h={17} tone="dark" className="w-full" />
-                    <Skeleton w={28} h={28} radius="title" tone="dark" className="mt-1" />
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className="relative z-20 -mt-8 -mb-1 block shrink-0">
+                    <Skeleton w={88} h={88} radius="avatar" tone="dark" />
+                  </span>
+                  <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5">
+                    <div className="flex items-center justify-between gap-1">
+                      <Skeleton w={20} h={14} tone="dark" />
+                      <Skeleton w={24} h={24} radius="title" tone="dark" />
+                    </div>
+                    <div className="mt-1">
+                      <SkeletonLines lines={2} h={16} tone="dark" className="w-full" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -910,12 +908,6 @@ export function ResultFallback() {
  * real <table> rather than a stack of divs, because table layout is what
  * decides the column widths - a div approximation would put every column in a
  * different place the moment the real screen arrived.
- *
- * The hint row and the "See my pups" action are deliberately absent: both are
- * marked .no-print, and .no-print is currently `display: none !important`
- * globally, so neither renders on screen today (see the note in the final
- * report - this is a bug in index.css, not something the skeleton should
- * paper over).
  */
 export function RecordFallback() {
   const back = useBack()
@@ -928,9 +920,9 @@ export function RecordFallback() {
       onBack={back}
       wide
       footer={
-        <div className="mx-auto flex w-full max-w-2xl gap-3 px-4">
+        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-2 px-4">
           <Skeleton w="100%" h={54} radius="avatar" />
-          <Skeleton w="100%" h={54} radius="avatar" />
+          <Skeleton w={200} h={14} />
         </div>
       }
     >

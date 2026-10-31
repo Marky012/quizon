@@ -72,23 +72,64 @@ export function OptionButton({
       /* The letter badge is aria-hidden, so without this a screen reader
          announces four identical buttons with no position at all. */
       aria-label={`${letter}, option ${index + 1}. ${option.text}`}
-      className={`option-btn ${stateClass} flex w-full items-center gap-3 px-4 py-3 text-indigo ${
+      className={`option-btn ${stateClass} flex w-full items-center gap-3 px-4 py-3 text-indigo relative overflow-visible ${
         !disabled ? 'cursor-pointer' : ''
       } ${multi && state === 'idle' && selected ? 'bg-turquoise-soft' : ''} ${
-        state === 'incorrect' ? 'animate-shake' : ''
+        state === 'correct'
+          ? 'animate-correct-pop'
+          : state === 'incorrect'
+            ? 'animate-shake'
+            : ''
       } ${state === 'idle' && disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
+      {/* Gamified celebratory sparkle burst on correct answer */}
+      {state === 'correct' && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 overflow-visible z-10"
+        >
+          {[
+            { x: -48, y: -22, s: 7, c: '#FFEB3B', d: 0, r: '50%' },
+            { x: 50, y: -20, s: 6, c: '#76FF03', d: 40, r: '2px' },
+            { x: -64, y: 16, s: 6, c: '#00D2C4', d: 70, r: '50%' },
+            { x: 68, y: 14, s: 8, c: '#FFD54F', d: 100, r: '2px' },
+            { x: -14, y: -28, s: 8, c: '#FFFDF4', d: 30, r: '50%' },
+            { x: 20, y: -26, s: 7, c: '#00D2C4', d: 80, r: '50%' },
+            { x: -32, y: 24, s: 6, c: '#76FF03', d: 60, r: '2px' },
+            { x: 36, y: 26, s: 7, c: '#FFEB3B', d: 110, r: '50%' },
+          ].map((sp, idx) => (
+            <span
+              key={idx}
+              className="absolute left-1/2 top-1/2 block animate-sparkle-burst"
+              style={
+                {
+                  '--tw-burst-x': `${sp.x}px`,
+                  '--tw-burst-y': `${sp.y}px`,
+                  animationDelay: `${sp.d}ms`,
+                  width: `${sp.s}px`,
+                  height: `${sp.s}px`,
+                  backgroundColor: sp.c,
+                  borderRadius: sp.r,
+                  boxShadow: `0 0 8px ${sp.c}`,
+                } as React.CSSProperties
+              }
+            />
+          ))}
+        </span>
+      )}
+
       {/* The letter circle. Borderless since the reset: idle reads on the
           indigo-soft fill, and the marked states invert to structural indigo
           or navy so the badge still carries the mark without a painted edge. */}
       <span
         aria-hidden="true"
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[15px] font-bold ${state === 'correct'
-            ? 'bg-indigo text-cream'
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] text-[16px] font-extrabold transition-colors ${
+          state === 'correct'
+            ? 'bg-indigo text-cream animate-badge-pop shadow-sm'
             : state === 'incorrect'
-              ? 'bg-navy text-cream'
+              ? 'bg-navy text-cream animate-badge-wobble shadow-sm'
               : 'bg-indigo-soft text-indigo'
-          }`}
+        }`}
       >
         {state === 'correct' ? '✓' : state === 'incorrect' ? '✕' : letter}
       </span>
@@ -99,8 +140,9 @@ export function OptionButton({
           colour OR without recognising the glyphs. */}
       {state !== 'idle' && (
         <span
-          className={`shrink-0 text-[13px] font-extrabold tracking-wide ${state === 'correct' ? 'text-indigo' : 'text-navy'
-            }`}
+          className={`shrink-0 flex items-center gap-1 text-[13px] font-extrabold tracking-wide ${
+            state === 'correct' ? 'text-indigo' : 'text-navy'
+          }`}
         >
           {state === 'correct' ? 'TAMA' : 'MALI'}
         </span>
@@ -111,8 +153,11 @@ export function OptionButton({
       {multi && state === 'idle' && (
         <span
           aria-hidden="true"
-          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] ${selected ? 'bg-turquoise shadow-[inset_0_-4px_0_0_rgb(26_43_76/0.15)] text-on-turquoise' : 'bg-indigo-soft'
-            }`}
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] ${
+            selected
+              ? 'bg-turquoise shadow-[inset_0_-4px_0_0_rgb(26_43_76/0.15)] text-on-turquoise'
+              : 'bg-indigo-soft'
+          }`}
         >
           {selected ? '✓' : ''}
         </span>

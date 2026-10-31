@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ScreenFrame } from '@/components/ScreenFrame'
 import { PupAvatar } from '@/components/PupAvatar'
 import { SkillSymbol } from '@/components/SkillSymbol'
 import { SyncBadge } from '@/components/SyncBadge'
-import { SKILLS, TEACHER } from '@/content/manifest'
+import { TeacherNote } from '@/components/LessonParts'
+import { SKILLS } from '@/content/manifest'
 import { TIER_ORDER, WORLD, type TierId } from '@/content/world'
 import { attemptsLeft, bestScore, isPassing } from '@/logic/scoring'
 import { play } from '@/lib/audio'
@@ -25,52 +26,6 @@ import { useGameStore } from '@/store/gameStore'
    never a scoreboard and never a punishment: she offers to go over the weakest
    skill together. She never appears mid-quiz.
    =========================================================================== */
-
-/**
- * Teacher Reyes' portrait, with a graceful stand-in while the art does not
- * exist.
- *
- * The file is not in the repo yet, and a bare <img> pointed at a missing asset
- * renders the browser's broken-image glyph - which on this screen appears at the
- * exact moment a learner has failed three times and is being told it is fine.
- * That is the worst possible place for a broken-image icon.
- *
- * The fallback is her initials on the same cream card, which keeps the layout
- * from collapsing and reads as intentional rather than as failure. When the art
- * lands this swaps itself out with no other change.
- */
-function TeacherPortrait() {
-  const [failed, setFailed] = useState(false)
-  const initials = TEACHER.name
-    .split(' ')
-    .map((part) => part.charAt(0))
-    .join('')
-    .slice(0, 2)
-
-  if (failed) {
-    return (
-      <div
-        aria-hidden="true"
-        className="flex h-[96px] w-[96px] shrink-0 items-center justify-center rounded-[24px] bg-cream font-display text-[32px] text-indigo shadow-[inset_0_-8px_0_0_rgb(26_43_76/0.1)]"
-      >
-        {initials}
-      </div>
-    )
-  }
-
-  return (
-    <img
-      src="/assets/teacher/teacher-reyes-happy.svg"
-      alt=""
-      width={96}
-      height={96}
-      loading="lazy"
-      decoding="async"
-      onError={() => setFailed(true)}
-      className="h-[96px] w-[96px] shrink-0 object-contain"
-    />
-  )
-}
 
 export function Result() {
   const { level = '' } = useParams()
@@ -191,23 +146,21 @@ export function Result() {
         </section>
 
         {passed && nextUnlocked && (
-          <p className="card-cream bg-lime-soft p-3 text-center text-[19px] leading-6 text-indigo">
-            {WORLD.tiers[nextTier].name} is now unlocked.
-          </p>
+          <TeacherNote emotion="happy" tone="lime">
+            <p className="text-[15px] font-medium leading-snug text-indigo/90">
+              Outstanding reading! <span className="font-bold">{WORLD.tiers[nextTier].name}</span> is now unlocked on your Reading Trail.
+            </p>
+          </TeacherNote>
         )}
 
         {/* Teacher Reyes, after three spent attempts. Not a scoreboard. */}
         {!passed && left === 0 && (
-          <section className="card-cream bg-turquoise-soft flex items-center gap-3 p-4">
-            <TeacherPortrait />
-            <div>
-              <p className="font-display text-[20px] leading-6 text-indigo">{TEACHER.name}</p>
-              <p className="leading-6 text-indigo">
-                Not yet, and that is fine. Let&apos;s go over{' '}
-                {weak[0]?.name ?? 'the passage'} together.
-              </p>
-            </div>
-          </section>
+          <TeacherNote emotion="support">
+            <p className="text-[15px] font-medium leading-relaxed text-indigo/90">
+              Not yet, and that is fine. Let&apos;s go over{' '}
+              <span className="font-bold underline decoration-turquoise decoration-2">{weak[0]?.name ?? 'the passage'}</span> together.
+            </p>
+          </TeacherNote>
         )}
 
         {/* What to review. Specific, linked, never a generic rule.
@@ -260,20 +213,9 @@ export function Result() {
           Best so far: {best}%. Attempts used: {state.attempts.length} of 3.
         </p>
 
-        {/* The record now travels by itself. The learner does not save a file
-            and hand it over; the device sends it to the teacher's dashboard
-            when it can. Printing stays, because a paper copy still goes into
-            the pupil's DepEd portfolio. */}
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="btn-chunky flex-1 bg-white py-4 text-indigo"
-            style={{ backgroundColor: 'var(--color-cream)' }}
-          >
-            Print my report
-          </button>
-        </div>
+        {/* The record travels by itself. The learner does not save a file and
+            hand it over; the device sends it to the teacher's dashboard when
+            it can. Printing lives in the teacher dashboard, not here. */}
         <SyncBadge className="justify-center text-center" />
       </div>
     </ScreenFrame>

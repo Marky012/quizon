@@ -1,10 +1,10 @@
 import { useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ScreenFrame, useBack } from '@/components/ScreenFrame'
+import { ProgressBar, ScreenFrame, useBack } from '@/components/ScreenFrame'
 import { PupAvatar } from '@/components/PupAvatar'
 import { SKILLS } from '@/content/manifest'
 import { SPECIES_NAME, type Skill } from '@/content/schemas'
-import { accentSoftVar } from '@/lib/accents'
+import { accentGlowVar, accentVar, needsOutline } from '@/lib/accents'
 import { play } from '@/lib/audio'
 import { useReducedMotion } from '@/lib/useReducedMotion'
 import { useGameStore } from '@/store/gameStore'
@@ -35,27 +35,30 @@ import { useGameStore } from '@/store/gameStore'
     the open row, never a letter placeholder standing where the character
     should be.
 
-   TWO ROWS PER CARD. ROW 1 is the card's face and reads as two columns: the
-   pup parks LEFT, riding the card's top edge with the Welcome overhang; the
-   RIGHT keeps the skill number and name with the accordion button directly
-   beneath it. The pup's name belongs to that head line but lives OUTSIDE the
-   card - absolutely parked above the top edge, right-aligned, floating next
-   to the overlapping pup head. ROW 2 is the disclosure: the skill's purpose
-   as ONE column spanning the card end to end, deliberately ignoring row 1's
-   two columns above it. Tucked, row 2 does not exist and the card shows only
-   the pup, the skill name and the button (the name floats above it all).
-   Opening the button (aria-expanded / aria-controls) grows row 2 beneath
-   row 1 and reveals the reward badges under the pup in row 1's left column,
-   which stay out of the card's quiet state.
+   2026-10-24 REFRESH - MINIMAL, MODERN, SAME IDEA. The overlapping sticker
+   stays the hero; everything around it got quieter and more deliberate.
+     - THE FACE IS NOW STACKED, NOT TWO COLUMNS. On the 360px phone a card is
+       ~142px inside, and the old pup-left / name-right split left the skill
+       name a ~60px column. Now the top band holds the pup's lower half (left)
+       and the lesson number + status medallions (right); the skill name runs
+       the card's FULL width underneath, with the accordion chevron at the end
+       of that line.
+     - THE LIT CORNER (.school-card in index.css): a two-layer accent glow, a
+       1px accent hairline that fades out by mid-card, and a blurred halo disc
+       the pup stands in. The accent comes from accentGlowVar so the dark
+       accents (indigo, navy) still glow on indigo.
+     - THE STICKER (.school-pup): tighter hard edge + soft ambient shadow, and
+       a small lift-and-tilt on hover (off under reduced motion).
+     - STATUS: tucked, a done lesson / earned pup shows as a tiny medallion in
+       the top band, so progress is visible at a glance without words. Opened,
+       row 2 shows the purpose plus two icon pills - filled when achieved,
+       a dashed ghost when "not yet", so the goal is always shown.
 
-   STANDARD SIZE, ALWAYS. Every slot in the card is a fixed-sized tile - the
-   name reserves two lines (line-clamp + min-h), the button is a 28px tile -
-   so all eight cards rest at the SAME natural height (72px of row 1 + 16px of
-   padding = 88) no matter how short or long a skill name is. There is NO
-   min-height floor: a floor is what left an empty band under the button when
-   the pup name moved out of the card, and the slots alone already standardise
-   the grid. Only row 2 changes a card's height, and only for the card being
-   opened.
+   STANDARD SIZE, ALWAYS. Every slot is fixed: the top band is 36px (the pup's
+   72px minus its 36px lift), the name reserves two 19px lines (line-clamp +
+   min-h), the chevron is a 28px tile beside it - so all eight cards rest at
+   the SAME height no matter how short or long a skill name is. Only row 2
+   changes a card's height, and only for the card being opened.
 
    ROWS DO NOT STRETCH. The grid is `items-start`, so a card's height is its
    own content: when one card's disclosure opens, the sibling card beside it
@@ -67,8 +70,9 @@ import { useGameStore } from '@/store/gameStore'
    navigation, and every visible control (the chevron) sits on a higher
    z-index above it - the stickers are pointer-events-none so taps on the pup
    still open the lesson. Cards are siblings, not nested buttons. The surface
-   deliberately stays non-positioned so the chevron's z-index resolves in the
-   wrapper's stack, above the overlay button.
+   is `position: relative` (for its glow pseudo-elements) but sets NO z-index
+   and NO transform, so it never becomes a stacking context: the chevron's
+   z-index still resolves in the wrapper's stack, above the overlay button.
    =========================================================================== */
 
 export function Skills() {
@@ -76,6 +80,7 @@ export function Skills() {
   const progress = useGameStore((s) => s.skills)
 
   const done = progress.filter((k) => k.lessonComplete).length
+  const earnedCount = progress.filter((k) => k.pupEarned).length
 
   return (
     <ScreenFrame
@@ -84,36 +89,40 @@ export function Skills() {
       onBack={back}
       wide
     >
-      {/* TWO COLUMNS UNCONDITIONALLY, and the `sm:` prefix is the whole point of
-          this card. This used to be `sm:grid-cols-2`, which means two columns
-          only ABOVE 640px - so on the 360x640 phone the art bible targets, eight
-          skills rendered as a single column of eight and the pupil scrolled for
-          a very long time to find the eighth one. The grid is now two columns at
-          every width, which is the 2x4 the design calls for.
+      {/* TWO COLUMNS UNCONDITIONALLY - the 2x4 the design calls for, at every
+          width (a `sm:` prefix once collapsed it to a single column of eight on
+          the 360px phone).
 
           `items-start` keeps each card its own height: opening one card's
-          disclosure grows THAT card, never the one beside it. `relative` on the
-          wrapper is the positioning context the overlay button and chevron
-          stack against.
+          disclosure grows THAT card, never the one beside it.
 
-          pt-8 IS THE HEADROOM FOR THE STICKER OVERHANG. The pup rides 24px
-          above its own card (its -mt-8 lift minus the surface's pt-2) and the
-          floating pup name pill rides the same 24px, so the pups and the
-          names share the high line; <main> only keeps py-4 - so without this
-          the first row's two pups landed 8px ABOVE <main>'s top edge, i.e.
-          inside the header, on top of the Woof School title, the back button
-          and the settings button. 16 + 32 - 24 = 24px of clearance at rest,
-          and the header's new z-40 (see ScreenFrame) keeps them behind it
+          pt-9 IS THE HEADROOM FOR THE STICKER OVERHANG. The pup rides 36px
+          above its own card, and the floating pup name pill rides the same
+          head line; without this the first row's pups would land inside the
+          header. The header's z-40 (see ScreenFrame) keeps them behind it
           while scrolling.
 
-          gap-y-8 IS THE ROW GAP. 32px vertical between rows - room enough
-          that the card below's taller glass name pill (24px) and the pup
-          sticker (24px overhang) clear the card above by a full 8px of page,
-          so a floating name can never be covered by an open card above it,
-          and the sticker still rides its own card's top edge as designed.
-          (The horizontal gap stays 12px: the names float above the cards,
-          not beside them.) */}
-      <ul className="grid grid-cols-2 items-start gap-x-3 gap-y-8 pt-8">
+          gap-y-11 IS THE ROW GAP. 44px between rows clears the next row's
+          36px sticker overhang and its name pill by a full 8px of page, so a
+          floating name can never be covered by an open card above it. */}
+      <section
+        aria-label="Your pup collection"
+        className="card-cream flex items-center gap-3 p-3.5"
+      >
+        <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-turquoise text-on-turquoise shadow-[inset_0_1.5px_0_0_rgb(255_255_255/0.45)]">
+          <StatusIcon kind="pup" className="h-6 w-6" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-[17px] leading-5 text-indigo">
+            {earnedCount} of {SKILLS.length} pups earned
+          </p>
+          <div className="mt-1.5">
+            <ProgressBar value={earnedCount} max={SKILLS.length} label="Pups earned" />
+          </div>
+        </div>
+      </section>
+
+      <ul className="grid grid-cols-2 items-start gap-x-3 gap-y-11 pt-12">
         {SKILLS.map((skill, i) => (
           <SkillCard key={skill.id} skill={skill} index={i} />
         ))}
@@ -135,16 +144,17 @@ function SkillCard({ skill, index }: { skill: Skill; index: number }) {
     navigate(`/skill/${skill.id}`)
   }
 
+  const number = String(index + 1).padStart(2, '0')
+  const glow = accentGlowVar(skill.pup.accent)
+
   return (
     <li>
-      {/* WRAPPER (the card). `relative` is the stacking and positioning
-          context for the overlay button, the floating pup name and the pup
-          sticker. The min-height floor lives on the SURFACE below, not here:
-          a floor on the wrapper would leave a dead band of page visible under
-          a shorter surface, while a floor on the surface IS the card. Owns
-          the hover lift; the entrance stagger rides the same element. */}
+      {/* WRAPPER (the card). `group` drives the surface's hover glow and the
+          sticker's tilt; `relative` is the stacking and positioning context
+          for the overlay button, the floating pup name and the pup sticker.
+          Owns the hover lift; the entrance stagger rides the same element. */}
       <div
-        className="relative transition-transform duration-200 hover:-translate-y-1 active:scale-[0.98]"
+        className="group relative transition-transform duration-200 hover:-translate-y-1 active:scale-[0.98]"
         /* The card rises in, staggered one card per row. `backwards` fill
            holds the hidden start state through the delay and then hands the
            transform back, so hover lift still works afterwards. Reduced
@@ -166,168 +176,203 @@ function SkillCard({ skill, index }: { skill: Skill; index: number }) {
           type="button"
           onClick={openLesson}
           aria-label={`Open ${skill.name} lesson`}
-          className="absolute inset-0 z-10"
+          className="absolute inset-0 z-10 cursor-pointer rounded-[22px]"
         />
 
-        {/* THE PUP NAME - A GLASS PILL FLOATING OUTSIDE THE CARD. Right
-            aligned above the top edge, bottom flush on the border, so it
-            rides the same head line as the pup's overhanging head, one on
-            each side. The pill reuses the accordion button's glass recipe
-            (translucent cream fill + inset white top rim + the same 9px
-            radius) so the name reads as part of the same control family; on
-            the cream page the 60% fill is a frosted chip rather than the
-            button's near-invisible tint, which is why the ink stays indigo
-            instead of cream. (A real speech bubble would want a speech-bubble
-            asset rather than a CSS diamond, so there is no tail.) The pill is
-            24px tall (20px line + 4px padding) and `-top-6` parks it exactly
-            flush on the card's top edge. `pointer-events-none` is
-            load-bearing: a tap on the pill must land on the card's own
-            surface, never on a dead hit box (the gap-y-8 row gap keeps the
-            pill clear of the card above by 8px). `whitespace-nowrap` keeps
-            the pill on one line - it grows leftward from right-2 and stays
-            clear of the pup's head on the other side. */}
-        <span className="pointer-events-none absolute right-2 -top-6 z-20 whitespace-nowrap rounded-[9px] bg-cream/60 px-2 py-0.5 font-display text-[15px] leading-5 text-indigo shadow-[inset_0_2px_0_0_rgb(255_255_255/0.3)]">
+        {/* THE PUP NAME - A FROSTED CHIP FLOATING OUTSIDE THE CARD. Right
+            aligned, bottom 6px above the top edge, so it rides the same head
+            line as the pup's overhanging head, one on each side. A small dot
+            in the pup's own accent ties the name to its card's colour (cream
+            gets a navy ring, or the dot would vanish on the white chip).
+            `pointer-events-none` is load-bearing: a tap on the chip must land
+            on the card, never on a dead hit box. `whitespace-nowrap` keeps it
+            one line; it grows leftward and stays clear of the pup's head. */}
+        <span className="pointer-events-none absolute right-1 -top-[30px] z-20 flex items-center gap-1.5 whitespace-nowrap rounded-pill bg-white/85 py-[3px] pl-2 pr-2.5 font-display text-[13px] font-semibold leading-[18px] text-indigo shadow-[0_1px_0_rgb(255_255_255/0.9)_inset,0_4px_12px_-4px_rgb(26_35_126/0.35)] ring-1 ring-indigo/10 backdrop-blur-sm">
+          <span
+            aria-hidden="true"
+            className={`h-1.5 w-1.5 rounded-full ${needsOutline(skill.pup.accent) ? 'ring-1 ring-navy/50' : ''}`}
+            style={{ background: accentVar(skill.pup.accent) }}
+          />
           {skill.pup.name}
         </span>
 
-        {/* THE SURFACE. Indigo depth card (see .skill-surface in index.css),
-            laid out as TWO ROWS: the face (two columns) and the disclosure
-            (one full-width column). NO min-height floor: every slot inside is
-            fixed-size, so the eight cards rest at the same natural height
-            (2 + 42 + 28 = 72 of row 1, plus the 16px padding) - and without a
-            floor there is no empty band left under the button when the
-            accordion is tucked. Only row 2 and the badge stack grow a card,
-            and only for the card being opened. Deliberately NOT a stacking
-            context (no position, no transform): its z-auto children resolve
-            against the wrapper above, so the accordion button can genuinely
-            sit on top of the invisible nav button instead of being trapped
-            beneath it. */}
-<div
-          className="skill-surface flex flex-col px-2 pb-2 pt-2"
-          style={{ '--skill-glow': accentSoftVar(skill.pup.accent) } as CSSProperties}
+        {/* THE SURFACE (.school-card in index.css): indigo depth with the lit
+            accent corner, gradient hairline and pup halo. TWO ROWS: the face
+            (pup + controls top, full-width skill name below) and the disclosure. */}
+        <div
+          className="school-card flex flex-col p-2.5 sm:p-3"
+          style={{ '--skill-accent': glow } as CSSProperties}
         >
-          {/* ROW 1 - THE CARD'S FACE. Two columns: pup left (plus badges
-              when open), number + name and the accordion button right. */}
-          <div className="flex items-stretch gap-1.5">
-            {/* LEFT COLUMN: the pup sticker + the reward badges below it. */}
-            <div className="flex w-[76px] shrink-0 flex-col items-center">
-              {/* THE PUP STICKER. Cut-out (plain), hard sticker shadow, idle
-                  float: the Welcome logo's exact treatment, riding the card's
-                  top-left edge. `-mt-8` lifts it so its top third hangs above
-                  the card. Always the real artwork - earned state is the badge
-                  below it once the row opens, not a placeholder here.
-                  pointer-events none so a tap on the pup lands on the nav
-                  button beneath. */}
-              <span className="pointer-events-none relative z-20 -mt-8 block animate-float">
-                <PupAvatar
-                  pup={skill.pup}
-                  size={76}
-                  plain
-                  className="drop-shadow-[0_6px_0_rgba(26,43,76,0.45)]"
-                />
+          {/* ROW 1 - THE CARD'S FACE.
+              Top band: Overlapping pup on left, Number + Status medallions + Chevron on right.
+              Bottom band: Full-width skill name so long titles like 'Wh-Questions' never crop. */}
+          <div className="flex items-start justify-between gap-1.5 min-h-[48px]">
+            {/* LEFT: THE OVERLAPPING PUP STICKER (78px, with -mt-8 overhang) */}
+            <div className="relative z-20 -mt-8 -ml-0.5 shrink-0">
+              <span className="school-pup block animate-float">
+                <PupAvatar pup={skill.pup} size={78} plain />
               </span>
-
-              {/* THE REWARD BADGES, stacked below the pup. Shown only once the
-                  disclosure is open AND the pupil has earned something - the
-                  card's quiet state shows the pup alone. */}
-              {open && (lessonDone || earned) && (
-                <span className="mt-1 flex flex-col gap-1">
-                  {lessonDone && (
-                    <span className="rounded-pill bg-lime px-1.5 py-0.5 text-[10px] font-bold text-on-lime">
-                      Lesson done
-                    </span>
-                  )}
-                  {earned && (
-                    <span className="rounded-pill bg-turquoise px-1.5 py-0.5 text-[10px] font-bold text-on-turquoise">
-                      Pup earned
-                    </span>
-                  )}
-                </span>
-              )}
             </div>
 
-            {/* RIGHT COLUMN: the skill number + name with the accordion
-                button directly beneath - these two things are row 1's right
-                side now that the pup name floats outside the card. `min-w-0`
-                lets long skill names wrap instead of blowing the card out. */}
-            <div className="flex min-w-0 flex-1 flex-col items-start pt-0.5">
-              {/* Number and name, in the Hub's yellow-on-indigo. `line-clamp-2`
-                  + `min-h-[42px]` give the name a FIXED two-line slot, so a
-                  short name ("Text Type") occupies the same space as a long one
-                  ("Fact or Opinion") and cannot make one card taller than its
-                  neighbour.
-
-                  ENLARGED 2026-10-08 (14/18 -> 17/21): the old sizes read as
-                  fine print on the indigo surface. The right column's budget
-                  is what caps them: 2 (pt-0.5) + 42 (name) + 0 (mt-0) + 28
-                  (button) = 72 of row 1, so with the surface's 16px padding
-                  every tucked card is exactly 88px tall - no floor, no empty
-                  band. The pup name left the card, so nothing else competes
-                  for the space. Do not raise the leading past 21 without
-                  re-checking that sum. */}
-              <span className="font-display min-h-[42px] w-full text-[17px] leading-[21px] text-yellow line-clamp-2">
-                <span className="tabular-nums text-cream/60">{index + 1}.</span> {skill.name}
-              </span>
-
-              {/* THE ACCORDION BUTTON, directly under the name and parked at
-                  the card's RIGHT edge: `self-end` pushes it against row 1's
-                  cross axis end so the tap target sits on the side a thumb
-                  reaches for, while the name keeps hugging the left. The
-                  button sits up tight against the name slot (mt-0) so the two
-                  read as one control. `z-30` keeps it a clickable button
-                  above the z-10 nav overlay; it is a brother of that overlay
-                  button, NOT its parent, so expanding row 2 can never nest a
-                  button inside a button. The icon rotates while row 2 opens. */}
-              <button
-                type="button"
-                onClick={() => setOpen((o) => !o)}
-                aria-expanded={open}
-                aria-controls={`skill-desc-${skill.id}`}
-                aria-label={open ? `Hide ${skill.name} details` : `Show ${skill.name} details`}
-                className="relative z-30 mt-0 flex h-7 w-7 items-center justify-center self-end rounded-[9px] bg-cream/15 text-cream shadow-[inset_0_2px_0_0_rgb(255_255_255/0.3)] transition-transform duration-200 active:scale-90"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className={`h-4 w-4 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+            {/* RIGHT: Number, Status Medallions, Accordion Chevron */}
+            <div className="flex flex-col items-end gap-1.5 pt-0.5">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="font-display text-[13px] font-black leading-none tabular-nums tracking-wide"
+                  style={{ color: glow }}
                 >
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </button>
+                  {number}
+                </span>
+
+                {/* THE ACCORDION BUTTON */}
+                <button
+                  type="button"
+                  onClick={() => setOpen((o) => !o)}
+                  aria-expanded={open}
+                  aria-controls={`skill-desc-${skill.id}`}
+                  aria-label={open ? `Hide ${skill.name} details` : `Show ${skill.name} details`}
+                  className={`relative z-30 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-cream ring-1 ring-inset transition-[background-color,transform,box-shadow] duration-200 active:scale-90 ${
+                    open ? 'bg-white/25 ring-white/40' : 'bg-white/[0.1] ring-white/20 hover:bg-white/20'
+                  }`}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`h-3.5 w-3.5 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* STATUS MEDALLIONS (shown when earned or done, neatly positioned under number) */}
+              {(lessonDone || earned) && (
+                <div className="flex items-center gap-1">
+                  {lessonDone && <StatusDot kind="lesson" />}
+                  {earned && <StatusDot kind="pup" />}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* ROW 2 - THE DISCLOSURE, ONE FULL-WIDTH COLUMN. It deliberately
-              ignores row 1's two columns: the purpose runs the card's entire
-              inner width, so the description reads as its own band under the
-              face. Collapsed it is a 0fr grid row - invisible and zero tall -
-              that grows to 1fr (ease) when the button opens it. `min-h-0` on
-              the inner span is what actually lets the row collapse; without it
-              overflow hidden clamps at text height and the fold never closes.
+          {/* SKILL NAME: FULL WIDTH OF THE CARD! Never cropped, never truncated! */}
+          <div className="mt-2 flex items-center min-h-[38px]">
+            <h2 className="font-display text-[15px] sm:text-[17px] font-bold leading-[19px] sm:leading-[21px] tracking-tight text-cream">
+              {skill.name}
+            </h2>
+          </div>
 
-              `mb-2` on the purpose is not decoration: the row gap (gap-y-8,
-              32px) already lets the card below's pup sticker and glass name
-              pill clear this card by 8px - the margin keeps the purpose's
-              last line even further off the card below, however tall this
-              card grows. */}
+          {/* ROW 2 - THE DISCLOSURE, FULL-WIDTH */}
           <span
             id={`skill-desc-${skill.id}`}
             aria-hidden={!open}
             className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
           >
             <span className="min-h-0 overflow-hidden">
-              <span className="mt-1.5 mb-2 block text-[12px] leading-[16px] text-cream/80">
+              <span
+                aria-hidden="true"
+                className="mt-2.5 block h-px w-full"
+                style={{ background: `linear-gradient(90deg, color-mix(in srgb, ${glow} 55%, transparent), transparent)` }}
+              />
+              <span className="mt-2 block text-[12px] leading-[17px] text-cream/75">
                 {skill.purpose}
+              </span>
+              <span className="mt-2.5 mb-1 flex flex-col gap-1.5">
+                <StatusPill kind="lesson" achieved={lessonDone} />
+                <StatusPill kind="pup" achieved={earned} />
               </span>
             </span>
           </span>
         </div>
       </div>
     </li>
+  )
+}
+
+/* --- Status: medallion (tucked) and pill (opened) -------------------------
+   Two achievements, two fixed colour+icon pairs, so colour is never the only
+   signal: lesson done = lime + check, pup earned = turquoise + paw. */
+
+const STATUS = {
+  lesson: { label: 'Lesson done', ghost: 'Lesson to do', tone: 'lime' },
+  pup: { label: 'Pup earned', ghost: 'Pup to earn', tone: 'turquoise' },
+} as const
+
+function StatusIcon({ kind, className }: { kind: keyof typeof STATUS; className?: string }) {
+  if (kind === 'lesson') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="m5 12.5 4.5 4.5L19 7.5" />
+      </svg>
+    )
+  }
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" className={className}>
+      <ellipse cx="12" cy="16" rx="5" ry="4.2" />
+      <circle cx="5.5" cy="10.5" r="2.2" />
+      <circle cx="9.3" cy="6.3" r="2.3" />
+      <circle cx="14.7" cy="6.3" r="2.3" />
+      <circle cx="18.5" cy="10.5" r="2.2" />
+    </svg>
+  )
+}
+
+/** Tucked-card medallion: an 18px filled disc with its icon. */
+function StatusDot({ kind }: { kind: keyof typeof STATUS }) {
+  const s = STATUS[kind]
+  return (
+    <span
+      role="img"
+      aria-label={s.label}
+      className={`flex h-[18px] w-[18px] items-center justify-center rounded-full text-indigo ${
+        s.tone === 'lime' ? 'bg-lime' : 'bg-turquoise'
+      }`}
+      style={{
+        boxShadow: `0 0 0 2px rgb(26 35 126 / 0.9), 0 0 10px 0 color-mix(in srgb, var(--color-${s.tone}) 60%, transparent)`,
+      }}
+    >
+      <StatusIcon kind={kind} className="h-[11px] w-[11px]" />
+    </span>
+  )
+}
+
+/**
+ * Opened-card pill. Achieved: a tinted glass chip in the status colour with a
+ * filled icon disc. Not yet: a dashed ghost in faded cream, so the child still
+ * sees what there is to earn.
+ */
+function StatusPill({ kind, achieved }: { kind: keyof typeof STATUS; achieved: boolean }) {
+  const s = STATUS[kind]
+  if (!achieved) {
+    return (
+      <span className="flex w-full items-center gap-1.5 rounded-pill border border-dashed border-cream/25 py-1 px-2 text-[11px] font-bold leading-none text-cream/60">
+        <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-cream/10">
+          <StatusIcon kind={kind} className="h-[10px] w-[10px] opacity-70" />
+        </span>
+        <span className="truncate">{s.ghost}</span>
+      </span>
+    )
+  }
+  const lime = s.tone === 'lime'
+  return (
+    <span
+      className={`flex w-full items-center gap-1.5 rounded-pill py-1 px-2 text-[11px] font-bold leading-none ring-1 ring-inset ${
+        lime ? 'bg-lime/15 text-lime ring-lime/40' : 'bg-turquoise/15 text-turquoise ring-turquoise/40'
+      }`}
+    >
+      <span
+        className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full text-indigo shadow-sm ${
+          lime ? 'bg-lime' : 'bg-turquoise'
+        }`}
+      >
+        <StatusIcon kind={kind} className="h-[11px] w-[11px]" />
+      </span>
+      <span className="truncate">{s.label}</span>
+    </span>
   )
 }

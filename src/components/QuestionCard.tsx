@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Question } from '@/content/schemas'
 import { OptionButton, type OptionState } from './OptionButton'
 import { play, buzz } from '@/lib/audio'
+import { TeacherNote } from './LessonParts'
 
 /* ===========================================================================
    ONE QUESTION, PRESENTED AND MARKED.
@@ -89,6 +90,11 @@ export function QuestionCard({
     }
   }, [])
 
+  const onAdvanceRef = useRef(onAdvance)
+  useEffect(() => {
+    onAdvanceRef.current = onAdvance
+  }, [onAdvance])
+
   // The unmount cleanup. Without it the stale-advance bug above is live.
   useEffect(() => clearAdvance, [clearAdvance])
 
@@ -132,7 +138,7 @@ export function QuestionCard({
     clearAdvance()
     timerRef.current = window.setTimeout(() => {
       timerRef.current = null
-      onAdvance()
+      onAdvanceRef.current()
     }, feedbackMs)
   }
 
@@ -198,13 +204,28 @@ export function QuestionCard({
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm font-bold text-navy/80">
-        Item {index + 1} of {total}
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <span className="rounded-pill bg-indigo px-3 py-1 text-[12px] font-extrabold tracking-wide text-cream shadow-sm">
+          Item {index + 1} of {total}
+        </span>
+        <div className="flex gap-1" aria-hidden="true">
+          {Array.from({ length: Math.min(total, 12) }, (_, i) => (
+            <span
+              key={i}
+              className={`h-2 w-2 rounded-full ${
+                i < index ? 'bg-lime' : i === index ? 'bg-turquoise ring-2 ring-turquoise/30' : 'bg-indigo/15'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
 
-      <p id="prompt-text" className="text-[20px] leading-7 font-bold text-indigo">
-        {question.prompt}
-      </p>
+      <div className="card-cream relative overflow-hidden px-4 py-4 pl-5 ring-1 ring-indigo/10">
+        <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-turquoise to-violet" />
+        <p id="prompt-text" className="text-[20px] leading-7 font-bold text-indigo">
+          {question.prompt}
+        </p>
+      </div>
 
       <div
         ref={groupRef}
@@ -246,34 +267,59 @@ export function QuestionCard({
           useful, so the errorTag is always shown when one exists. */}
       {verdict && (
         <div
-          className={`card-cream animate-slide-up p-3 ${verdict.correct ? 'bg-lime-soft' : 'bg-coral-soft'}`}
+          className="animate-feedback-spring"
           /* Assertive only when wrong. See the note at the top of the file. */
           role={verdict.correct ? 'status' : 'alert'}
         >
-          {verdict.correct ? (
-            <>
-              <p className="font-display text-[20px] text-indigo">
-                Correct! That is the right answer.
-              </p>
-              <p className="mt-1 leading-6 text-indigo">{question.explanation}</p>
-            </>
-          ) : (
-            <>
-              <p className="font-display text-[20px] text-indigo">Not quite. Let&apos;s look again.</p>
-              {chosenOption?.errorTag && (
-                <p className="mt-1 leading-6 text-indigo">
-                  <span className="font-bold">Why not: </span>
-                  {chosenOption.errorTag}
-                </p>
-              )}
-              <p className="mt-1 leading-6 text-indigo">
-                <span className="font-bold">The rule: </span>
-                {question.explanation}
-              </p>
-            </>
-          )}
+          <TeacherNote
+            emotion={verdict.correct ? 'happy' : 'support'}
+            tone={verdict.correct ? 'lime' : 'yellow'}
+            size={96}
+          >
+            {verdict.correct ? (
+              <div>
+                <div className="mb-1 flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-lime text-indigo text-[15px] font-black shadow-sm animate-badge-pop"
+                  >
+                    ?
+                  </span>
+                  <p className="font-display text-[19px] font-bold leading-6 text-indigo">
+                    Correct! That is the right answer.
+                  </p>
+                </div>
+                <p className="leading-6 font-medium text-indigo/90">{question.explanation}</p>
+              </div>
+            ) : (
+              <div>
+                <div className="mb-1 flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow text-indigo text-[14px] font-black shadow-sm animate-badge-wobble"
+                  >
+                    ??
+                  </span>
+                  <p className="font-display text-[19px] font-bold leading-6 text-indigo">
+                    Not quite. Let&apos;s look again.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1">
+                  {chosenOption?.errorTag && (
+                    <p className="leading-6 text-indigo/90">
+                      <span className="font-bold text-navy">Why not: </span>
+                      {chosenOption.errorTag}
+                    </p>
+                  )}
+                  <p className="leading-6 text-indigo/90">
+                    <span className="font-bold text-navy">The rule: </span>
+                    {question.explanation}
+                  </p>
+                </div>
+              </div>
+            )}
+          </TeacherNote>
         </div>
-      )}
-    </div>
+      )}    </div>
   )
 }

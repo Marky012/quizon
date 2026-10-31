@@ -117,6 +117,26 @@ export async function promptInstall(): Promise<'accepted' | 'dismissed' | 'unava
   }
 }
 
+const GATE_KEY = 'quizon.installOfferAnswered'
+
+/** Has the learner already answered the first-run install offer (install OR continue in browser)? */
+export function installOfferAnswered(): boolean {
+  try {
+    return window.localStorage.getItem(GATE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+/** Remember the answer so the offer is made once, not on every launch. */
+export function markInstallOfferAnswered(): void {
+  try {
+    window.localStorage.setItem(GATE_KEY, '1')
+  } catch {
+    /* private mode: the offer simply repeats next launch */
+  }
+}
+
 /** Test seam: pretend the browser made an offer. */
 export function __setInstallPromptForTests(value: BeforeInstallPromptEvent | null): void {
   deferred = value

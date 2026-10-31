@@ -67,7 +67,7 @@ export const DEV_GROUPS: DevGroup[] = [
     screens: [
       { path: '/skills', label: 'Skills', note: 'the eight modules, lesson and pup state per row.' },
       { path: '/arena', label: 'Reading Trail', note: 'three tiers, locked and unlocked, plus Continue.' },
-      { path: '/record', label: 'Your Record', note: 'the report, weakest skills, print and export.' },
+      { path: '/record', label: 'Your Record', note: 'the report, weakest skills, sync.' },
       { path: '/settings', label: 'Settings', note: 'sound toggle. Reached from the hub header.' },
     ],
   },

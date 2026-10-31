@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { InstallButton } from '@/components/InstallButton'
 import { ProgressBar } from '@/components/ScreenFrame'
 import { LoadingNote } from '@/components/Skeleton'
 import { WORLD } from '@/content/world'
+import { play } from '@/lib/audio'
+import {
+  installAvailable,
+  installOfferAnswered,
+  markInstallOfferAnswered,
+  promptInstall,
+  subscribeInstall,
+} from '@/lib/install'
 import { isWarmupDone, subscribeWarmup, startWarmup } from '@/lib/preload'
 import { useGameStore } from '@/store/gameStore'
 
@@ -67,6 +74,10 @@ export function Boot() {
   const [pct, setPct] = useState(0)
   const [ready, setReady] = useState(isWarmupDone)
   const [tip, setTip] = useState(0)
+  const [canInstall, setCanInstall] = useState(installAvailable)
+  const [offerClosed, setOfferClosed] = useState(false)
+
+  useEffect(() => subscribeInstall(setCanInstall), [])
 
   useEffect(() => {
     // Already warmed up in this page load: this is an internal bounce back to
@@ -89,7 +100,68 @@ export function Boot() {
     return () => globalThis.clearInterval(id)
   }, [])
 
-  /* THE SPROKEN PATH. The screen shows until the warm-up is done, and only
+  /* THE FIRST-RUN INSTALL OFFER. After the bar hits 100% the app used to
+     redirect instantly, so the install button never had a moment on screen.
+     Now, once, if the browser can install the app and the learner has not
+     answered before, we stop here and ask: install, or carry on in the
+     browser. Either answer is remembered. */
+  const showOffer = ready && canInstall && !offerClosed && !installOfferAnswered()
+
+  function answerOffer(install: boolean) {
+    play('tap')
+    markInstallOfferAnswered()
+    if (install) void promptInstall().finally(() => setOfferClosed(true))
+    else setOfferClosed(true)
+  }
+
+  if (showOffer) {
+    return (
+      <main
+        className="flex min-h-dvh flex-col items-center justify-center gap-5 px-6"
+        style={{
+          paddingTop: 'max(24px, env(safe-area-inset-top))',
+          paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
+        }}
+      >
+        <h1 className="sr-only">{`Install QuizOn!`}</h1>
+        <img
+          src="/assets/brand/quizon-logo.png"
+          alt=""
+          width={160}
+          height={160}
+          aria-hidden="true"
+          className="h-[140px] w-[140px] animate-float drop-shadow-[0_10px_0_rgba(26,43,76,0.45)]"
+        />
+        <div className="card-cream animate-feedback-spring w-full max-w-sm p-5 text-center">
+          <p className="font-display text-[24px] leading-7 font-bold text-indigo">You are all set!</p>
+          <p className="mt-1 text-[15px] leading-6 text-navy/80">
+            Put QuizOn! on this device so it opens like an app and works with no signal.
+          </p>
+          <button
+            type="button"
+            onClick={() => answerOffer(true)}
+            className="btn-chunky mt-4 flex w-full items-center justify-center gap-2 bg-indigo px-5 py-3.5 text-[17px] text-cream"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 3v11" />
+              <path d="M7 10l5 5 5-5" />
+              <path d="M4 19h16" />
+            </svg>
+            Download the game
+          </button>
+          <button
+            type="button"
+            onClick={() => answerOffer(false)}
+            className="mt-3 w-full rounded-button px-5 py-3 text-[15px] font-bold text-indigo underline decoration-indigo/30 underline-offset-4 transition-colors hover:bg-indigo-soft/60 active:scale-[0.98]"
+          >
+            Continue playing in browser
+          </button>
+        </div>
+      </main>
+    )
+  }
+
+  /* THE SPOKEN PATH. The screen shows until the warm-up is done, and only
      then does the app decide where the learner belongs. */
   if (ready) {
     if (!hasStarted) return <Navigate to="/welcome" replace />
@@ -119,20 +191,25 @@ export function Boot() {
       {/* The same mark Welcome and the Hub use, at the same 3px navy drop
           shadow. The float is CSS and index.css neutralises it when the OS
           asks for reduced motion. */}
-      <img
-        src="/assets/brand/quizon-logo.png"
-        alt=""
-        width={200}
-        height={200}
-        aria-hidden="true"
-        className="h-[200px] w-[200px] animate-float drop-shadow-[0_10px_0_rgba(26,43,76,0.45)]"
-      />
+      <div className="relative">
+        <span aria-hidden="true" className="absolute inset-0 -z-10 scale-125 rounded-full bg-[radial-gradient(circle,rgb(255_255_255/0.75),transparent_65%)] blur-md" />
+        <img
+          src="/assets/brand/quizon-logo.png"
+          alt=""
+          width={200}
+          height={200}
+          aria-hidden="true"
+          className="h-[200px] w-[200px] animate-float drop-shadow-[0_10px_0_rgba(26,43,76,0.45)]"
+        />
+      </div>
 
       <p className="font-display text-[22px] leading-7 font-bold text-indigo">{WORLD.subtitle}</p>
 
-      <div className="card-cream w-full max-w-sm p-5">
+      <div className="card-cream w-full max-w-sm bg-cream/95 p-5 backdrop-blur-sm">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[15px] leading-6 font-semibold text-navy/80">Warming up…</span>
+          <span className="text-[15px] leading-6 font-semibold text-navy/80">
+            {pct >= 100 ? 'All set!' : 'Getting the game ready…'}
+          </span>
           <span className="font-display w-[68px] text-right text-[28px] leading-8 text-indigo tabular-nums">
             {pct}%
           </span>
@@ -151,13 +228,7 @@ export function Boot() {
 
       <LoadingNote srOnly>{spoken}</LoadingNote>
 
-      {/* THE INSTALL OFFER. Art bible panel 01 puts it here, once, after the
-          bar passes 30%: the app is opening, there is nothing else to do, and
-          the browser's own offer is one that a child would never find in a
-          browser menu. The 30% gate is not decoration - it holds the offer
-          back until the app is clearly on its way in, so the screen does not
-          open with a button on it. */}
-      {pct >= 30 && <InstallButton />}
+      {/* The install offer now lives on its own step after 100% (see showOffer). */}
     </main>
   )
 }

@@ -1,35 +1,35 @@
-﻿import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ScreenFrame, useBack } from '@/components/ScreenFrame'
 import { PupAvatar } from '@/components/PupAvatar'
+import { Sheet } from '@/components/Sheet'
 import { SkillSymbol } from '@/components/SkillSymbol'
 import { SyncBadge } from '@/components/SyncBadge'
+import { FEATURES } from '@/constants/features'
 import { SKILLS } from '@/content/manifest'
 import { TIER_ORDER } from '@/content/world'
 import { attemptsLeft, bestScore, isPassing } from '@/logic/scoring'
+import { syncNow } from '@/sync/manager'
 import { useGameStore } from '@/store/gameStore'
 
 /* ===========================================================================
-   THE RECORD - the thing the education group actually reads.
+   THE RECORD - what the learner sees, and what the teacher dashboard reads.
 
-   This screen is designed to be PRINTED. `print:` overrides in index.css pull
-   the chrome off, force black on white, and stop the navy from eating toner.
-   That is why the rows are a real table and not a grid of cards: a table
-   survives being photocopied in greyscale, which a card layout does not.
+   A real <table> rather than a grid of cards: the columns are the point, and a
+   table keeps them aligned at every width.
 
    EIGHT ROWS, ONE PER SKILL, because the whole point of the product is that a
    teacher can see which of the eight things a learner needs help with. A single
    overall percentage tells them nothing they can act on.
 
-   NO NAMES ANYWHERE ON THIS PAGE, and as of 2026-10-06 no learner code either:
-   the code is still generated and still rides along in the export filename, but
-   it is no longer printed in the header or anywhere else on screen. The header
-   now carries the title alone.
+   NO NAMES ANYWHERE ON THIS PAGE, and no learner code either. The code is
+   still generated for the sync record, but it is not shown here.
    =========================================================================== */
 
 export function Record() {
   const navigate = useNavigate()
   const back = useBack()
+  const [syncInfoOpen, setSyncInfoOpen] = useState(false)
 
   const skills = useGameStore((s) => s.skills)
   const tiers = useGameStore((s) => s.tiers)
@@ -52,6 +52,16 @@ export function Record() {
   )
 
   const totalReview = Object.values(missed).reduce((a, b) => a + b, 0)
+  const earnedTotal = rows.filter((r) => r.earned).length
+  const scored = rows.filter((r) => r.preTest !== null)
+  const avgCheck = scored.length
+    ? Math.round(scored.reduce((a, r) => a + (r.preTest ?? 0), 0) / scored.length)
+    : null
+  const tiles = [
+    { label: 'Pups earned', value: `${earnedTotal}/${rows.length}`, tone: 'bg-turquoise-soft' },
+    { label: 'Avg. check', value: avgCheck === null ? '—' : `${avgCheck}%`, tone: 'bg-lime-soft' },
+    { label: 'To review', value: String(totalReview), tone: totalReview > 0 ? 'bg-coral-soft' : 'bg-indigo-soft' },
+  ]
 
   return (
     <ScreenFrame
@@ -59,24 +69,49 @@ export function Record() {
       onBack={back}
       wide
       footer={
-        <div className="mx-auto flex w-full max-w-2xl gap-3 px-4">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-1.5 px-4">
+          {/* A real button, not a dead one: tapping it always answers. While
+              teacherSync is closed it explains the roadmap; when it opens, it
+              sends the record. */}
           <button
             type="button"
-            onClick={() => window.print()}
-            className="btn-chunky flex-1 bg-turquoise py-4 text-on-turquoise"
+            onClick={() => {
+              if (FEATURES.teacherSync) {
+                void syncNow()
+              } else {
+                setSyncInfoOpen(true)
+              }
+            }}
+            className="btn-chunky flex w-full items-center justify-center gap-2 bg-turquoise py-4 text-on-turquoise"
           >
-            Print
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 16V4" />
+              <path d="M7 9l5-5 5 5" />
+              <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+            </svg>
+            Sync record
           </button>
+          <p className="text-center text-[13px] leading-4 text-navy/75">
+            Coming soon: send your record to your teacher.
+          </p>
         </div>
       }
     >
-      {/* Only on screen. Hidden before printing. */}
-      <div className="mb-4 flex flex-col gap-2 no-print">
+      <div className="mb-4 flex flex-col gap-2">
         <p className="flex-1 text-[15px] leading-6 text-navy/80">
-          Print this page for your teacher.
+          This is your reading record. Your teacher will see it once it is synced.
         </p>
         <SyncBadge />
       </div>
+
+      <ul className="mb-5 grid grid-cols-3 gap-2.5">
+        {tiles.map((t) => (
+          <li key={t.label} className={`card-cream ${t.tone} px-2 py-3 text-center`}>
+            <p className="font-display text-[26px] leading-7 text-indigo tabular-nums">{t.value}</p>
+            <p className="mt-0.5 text-[12px] font-bold leading-4 text-navy/75">{t.label}</p>
+          </li>
+        ))}
+      </ul>
 
       <table className="w-full border-collapse text-left">
         <caption className="sr-only">
@@ -166,10 +201,28 @@ export function Record() {
       <button
         type="button"
         onClick={() => navigate('/hub')}
-        className="btn-chunky mt-4 w-full bg-turquoise py-4 text-on-turquoise no-print"
+        className="btn-chunky mt-4 w-full bg-turquoise py-4 text-on-turquoise"
       >
         See my pups
       </button>
+
+      <Sheet
+        open={syncInfoOpen}
+        onClose={() => setSyncInfoOpen(false)}
+        title="Sync is coming soon"
+      >
+        <p className="text-[15px] leading-6 text-navy/80">
+          Your record is saved on this device. Soon, your teacher will be able to
+          see your progress.
+        </p>
+        <button
+          type="button"
+          onClick={() => setSyncInfoOpen(false)}
+          className="btn-chunky mt-4 w-full bg-turquoise py-3 text-on-turquoise"
+        >
+          Okay
+        </button>
+      </Sheet>
     </ScreenFrame>
   )
 }

@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { ScreenFrame, ProgressBar } from '@/components/ScreenFrame'
 import { QuestionCard } from '@/components/QuestionCard'
 import { Sheet } from '@/components/Sheet'
 import { PupAvatar } from '@/components/PupAvatar'
+import { SkillSymbol } from '@/components/SkillSymbol'
+import { TeacherNote } from '@/components/LessonParts'
 import { QuizFallback } from '@/components/RouteFallback'
 import { SKILLS, SKILL_BY_ID } from '@/content/manifest'
+import { accentVar, accentSoftVar, accentInk } from '@/lib/accents'
 import { getTierPools, storyPoolIsThin } from '@/content/questions'
 import { PASSAGE_BY_ID } from '@/content/texts'
 import { TIER_ORDER, WORLD, type TierId } from '@/content/world'
@@ -215,7 +218,14 @@ export function Quiz() {
       setPickerOpen(true)
       return
     }
-    // A locked hint says WHY. Art bible 7.3: never a dead tap.
+    // If the hint was already spent this attempt, let the learner re-read their
+    // helper's rule card in the drawer instead of just showing a lock message.
+    if (hintSkillId && hintPup) {
+      play('tap')
+      setHintOpen(true)
+      return
+    }
+    // A locked hint says WHY in a drawer. Art bible 7.3: never a dead tap.
     play('locked')
     buzz(30)
     setLockNote(lockReason)
@@ -284,17 +294,21 @@ export function Quiz() {
       </a>
 
       <div className="flex flex-col gap-4">
-        <section className="card-cream p-4">
-          <div className="mb-2 flex items-baseline justify-between gap-2">
-            <h2 className="font-display text-[20px] leading-6 text-indigo">
+        <section className="card-cream relative overflow-hidden p-4 ring-1 ring-indigo/10">
+          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-yellow via-turquoise to-violet" />
+          <div className="mb-3 mt-1 flex items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 font-display text-[21px] leading-6 text-indigo">
+              <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-yellow-soft text-[18px] shadow-sm">
+                📖
+              </span>
               {passage?.title ?? 'Story'}
             </h2>
-            <span className="shrink-0 text-sm text-navy/80">
+            <span className="shrink-0 rounded-pill bg-indigo-soft px-2.5 py-0.5 text-[12px] font-extrabold text-indigo">
               Story {assigned.replace('T', '')} of 6
             </span>
           </div>
           {/* The passage, IN FULL. Never truncated, never behind a "more". */}
-          <div className="passage text-indigo">
+          <div className="passage rounded-[16px] bg-yellow-soft/50 p-3.5 text-indigo">
             {passage ? passage.sentences.join(' ') : 'This story is missing.'}
           </div>
         </section>
@@ -312,15 +326,6 @@ export function Quiz() {
           <p className="card-cream bg-yellow-soft p-3 text-[15px] leading-6 text-indigo">
             This story still has fewer questions than the level needs, so this quiz is shorter
             than {itemCount} items. The education group is still writing them.
-          </p>
-        )}
-
-        {lockNote && (
-          <p
-            role="status"
-            className="card-cream bg-turquoise-soft animate-slide-up p-3 text-[15px] leading-6 text-indigo"
-          >
-            {lockNote}
           </p>
         )}
 
@@ -347,45 +352,151 @@ export function Quiz() {
           <button
             type="button"
             onClick={tapHint}
-            className={`flex h-16 items-center gap-2 rounded-full px-5 font-bold shadow-[0_4px_0_0_rgb(26_43_76/0.18)] ${hintUnlocked
-                ? 'animate-pulse-badge bg-turquoise text-on-turquoise'
+            className={`flex h-16 items-center gap-2.5 rounded-full px-5 font-bold shadow-[0_4px_0_0_rgb(26_43_76/0.18)] transition-transform active:scale-95 ${
+              hintUnlocked
+                ? 'animate-pulse-badge bg-turquoise text-on-turquoise ring-2 ring-turquoise/40'
                 : hintSkillId
                   ? 'bg-indigo-soft text-indigo'
-                  : 'bg-yellow-soft text-indigo'
-              }`}
+                  : 'bg-yellow-soft text-indigo ring-2 ring-yellow/60'
+            }`}
           >
-            <span aria-hidden="true" className="text-[20px] leading-none">
-              {hintSkillId ? '✓' : '💡'}
+            <span
+              aria-hidden="true"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-cream/70 text-[20px] leading-none shadow-sm"
+            >
+              {hintSkillId ? '🐾' : hintUnlocked ? '💡' : '🔒'}
             </span>
-            <span>{hintUnlocked ? 'Call a helper' : hintSkillId ? 'Helper called' : 'Hint'}</span>
+            <span>{hintUnlocked ? 'Call a helper' : hintSkillId ? 'View helper rule' : 'Hint'}</span>
           </button>
         </div>
 
         {/* NO TIMER. Not hidden lower down, not behind the debug panel. Absent. */}
       </div>
 
+      {/* LOCKED HINT DRAWER - explains why the hint is locked inside a bottom sheet
+          with Teacher Reyes encouraging the learner. */}
+      <Sheet
+        open={lockNote !== null}
+        onClose={() => setLockNote(null)}
+        title="Helper Locked"
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3.5 rounded-[20px] bg-yellow-soft/70 p-3.5 ring-2 ring-yellow">
+            <span
+              aria-hidden="true"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-yellow text-[24px] shadow-sm"
+            >
+              🔒
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-navy/70">
+                How to unlock your helper
+              </p>
+              <p className="font-display text-[17px] font-bold leading-snug text-indigo">
+                Get 1 Answer Right First!
+              </p>
+            </div>
+          </div>
+
+          <TeacherNote emotion="hint" tone="yellow" size={104}>
+            <p role="status" className="text-[15px] font-medium leading-relaxed text-indigo">
+              {lockNote}
+            </p>
+          </TeacherNote>
+
+          <button
+            type="button"
+            onClick={() => setLockNote(null)}
+            className="btn-chunky bg-turquoise py-3.5 text-on-turquoise"
+          >
+            Got it, let&apos;s try!
+          </button>
+        </div>
+      </Sheet>
+
+      {/* ACTIVE HELPER HINT DRAWER - the chosen pup standing free with a speech bubble. */}
       <Sheet
         open={hintOpen && hintPup !== null}
         onClose={() => setHintOpen(false)}
         title={`Help from ${hintPup?.name ?? ''}`}
       >
         {hintPup && hintSkill && (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <PupAvatar pup={hintPup} state="hint" size={120} />
-              <div>
-                <p className="text-sm text-navy/80">{hintSkill.name}</p>
-                <p className="font-display text-[22px] leading-7 text-indigo">{hintPup.name}</p>
+          <div className="flex flex-col gap-4">
+            <div
+              className="flex items-center justify-between gap-3 rounded-[18px] px-3.5 py-2.5 ring-1 ring-indigo/10"
+              style={{ background: accentSoftVar(hintPup.accent) } as CSSProperties}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] shadow-sm"
+                  style={{ background: accentVar(hintPup.accent) } as CSSProperties}
+                >
+                  <SkillSymbol id={hintSkill.symbol} size={20} color={accentInk(hintPup.accent)} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-navy/70">
+                    Reading Skill
+                  </p>
+                  <p className="truncate font-display text-[18px] font-bold leading-5 text-indigo">
+                    {hintSkill.name}
+                  </p>
+                </div>
+              </div>
+              <span className="shrink-0 rounded-pill bg-cream px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-indigo shadow-sm">
+                1 Hint Used
+              </span>
+            </div>
+
+            {/* Pup standing free next to a speech bubble, matching Teacher Reyes */}
+            <div className="flex items-end gap-2 pt-2">
+              <div className="relative shrink-0 animate-float">
+                <span
+                  aria-hidden="true"
+                  className="absolute -bottom-1 left-1/2 h-3 w-[70%] -translate-x-1/2 rounded-[50%] bg-navy/20 blur-[3px]"
+                />
+                <PupAvatar
+                  pup={hintPup}
+                  state="hint"
+                  size={108}
+                  plain
+                  className="relative drop-shadow-[0_8px_10px_rgba(26,43,76,0.28)]"
+                />
+              </div>
+              <div
+                className="animate-card-in relative mb-4 min-w-0 flex-1 rounded-[22px] px-4 pb-3.5 pt-5 text-indigo shadow-[0_4px_0_0_rgb(26_43_76/0.12),0_18px_30px_-20px_rgb(26_35_126/0.6)]"
+                style={
+                  {
+                    background: 'linear-gradient(180deg, #fffdf4 0%, var(--color-yellow-soft) 100%)',
+                    border: '2.5px solid var(--color-yellow)',
+                  } as CSSProperties
+                }
+              >
+                <span
+                  aria-hidden="true"
+                  className="absolute -left-[11px] bottom-6 size-[18px] rotate-45 rounded-bl-[5px]"
+                  style={
+                    {
+                      background: 'var(--color-yellow-soft)',
+                      borderLeft: '2.5px solid var(--color-yellow)',
+                      borderBottom: '2.5px solid var(--color-yellow)',
+                    } as CSSProperties
+                  }
+                />
+                <p className="absolute -top-3 left-4 rounded-pill bg-yellow px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-[0.08em] text-indigo shadow-sm">
+                  {hintPup.name}&apos;s Tip
+                </p>
+                <p className="text-[15px] font-medium leading-relaxed text-indigo">{hintSkill.hint}</p>
               </div>
             </div>
-            <p className="card-cream bg-yellow-soft p-3 leading-7 text-indigo">{hintSkill.hint}</p>
-            <p className="text-[15px] text-navy/80">
-              That is the rule, not the answer. Try the item again.
+
+            <p className="rounded-[14px] bg-indigo-soft/45 px-3.5 py-2 text-center text-[13px] font-semibold text-navy/85">
+              💡 That is the rule, not the answer. Use it to solve the item!
             </p>
+
             <button
               type="button"
               onClick={() => setHintOpen(false)}
-              className="btn-chunky bg-turquoise py-3 text-on-turquoise"
+              className="btn-chunky bg-turquoise py-3.5 text-on-turquoise"
             >
               Got it
             </button>
@@ -393,32 +504,91 @@ export function Quiz() {
         )}
       </Sheet>
 
-      {/* The picker. ONE hint, EIGHT possible helpers, only earned ones listed. */}
+      {/* THE HELPER PICKER DRAWER. ONE hint, EIGHT possible helpers, only earned ones listed. */}
       <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title="Which helper do you need?">
-        <ul className="grid grid-cols-4 gap-2">
-          {hintable.map((pup) => {
-            const skill = SKILLS.find((s) => s.pup.id === pup.id)
-            return (
-              <li key={pup.id}>
-                <button
-                  type="button"
-                  onClick={() => choose(skill?.id ?? '')}
-                  className="flex w-full flex-col items-center gap-1 rounded-[16px] bg-cream p-2 shadow-[0_3px_0_0_rgb(26_43_76/0.12)]"
-                >
-                  <PupAvatar pup={pup} state="hint" size={64} />
-                  <span className="text-[13px] leading-4 font-bold text-indigo">{pup.name}</span>
-                  <span className="text-[11px] leading-4 text-navy/80">{skill?.name}</span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-        {hintable.length === 0 && (
-          <p className="text-indigo">
-            You have not earned a helper yet. Get all {PRETEST_QUESTION_COUNT} right on a skill
-            check.
-          </p>
-        )}
+        <div className="flex flex-col gap-3.5">
+          <div className="flex items-center justify-between gap-2 rounded-[16px] bg-turquoise-soft/65 px-3.5 py-2.5 ring-1 ring-turquoise/40">
+            <p className="text-[13px] font-bold leading-snug text-indigo">
+              Pick the pup whose reading skill matches this question:
+            </p>
+            <span className="shrink-0 rounded-pill bg-turquoise px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-on-turquoise shadow-sm">
+              1 Hint Left
+            </span>
+          </div>
+
+          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            {hintable.map((pup) => {
+              const skill = SKILLS.find((s) => s.pup.id === pup.id)
+              const accent = accentVar(pup.accent)
+              const softBg = accentSoftVar(pup.accent)
+              const ink = accentInk(pup.accent)
+              return (
+                <li key={pup.id}>
+                  <button
+                    type="button"
+                    onClick={() => choose(skill?.id ?? '')}
+                    className="group relative flex h-full w-full flex-col items-center justify-between gap-1.5 overflow-hidden rounded-[20px] bg-cream p-3 pt-3.5 text-center shadow-[0_4px_0_0_rgb(26_43_76/0.14),0_12px_20px_-14px_rgb(26_35_126/0.45)] ring-2 ring-indigo/10 transition-all hover:-translate-y-0.5 hover:ring-turquoise active:translate-y-0 active:scale-[0.98]"
+                  >
+                    {/* Top accent bar */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-x-0 top-0 h-1.5"
+                      style={{ background: accent } as CSSProperties}
+                    />
+
+                    {/* Skill icon badge in top-right */}
+                    {skill && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute right-2 top-2.5 flex h-6 w-6 items-center justify-center rounded-full shadow-sm"
+                        style={{ background: accent } as CSSProperties}
+                      >
+                        <SkillSymbol id={skill.symbol} size={14} color={ink} />
+                      </span>
+                    )}
+
+                    {/* Free-standing pup with soft accent halo */}
+                    <div className="relative flex items-center justify-center py-1">
+                      <span
+                        aria-hidden="true"
+                        className="absolute h-16 w-16 rounded-full opacity-75 transition-transform group-hover:scale-110"
+                        style={{ background: softBg } as CSSProperties}
+                      />
+                      <PupAvatar
+                        pup={pup}
+                        state="hint"
+                        size={76}
+                        plain
+                        className="relative drop-shadow-[0_5px_6px_rgba(26,43,76,0.22)]"
+                      />
+                    </div>
+
+                    <div className="flex w-full flex-col items-center gap-0.5">
+                      <span className="font-display text-[17px] font-bold leading-5 text-indigo">
+                        {pup.name}
+                      </span>
+                      <span
+                        className="w-full truncate rounded-pill px-2 py-0.5 text-[11px] font-extrabold leading-4 text-indigo"
+                        style={{ background: softBg } as CSSProperties}
+                      >
+                        {skill?.name}
+                      </span>
+                    </div>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+
+          {hintable.length === 0 && (
+            <TeacherNote emotion="support" tone="yellow" size={96}>
+              <p className="text-[14px] font-medium leading-relaxed text-indigo">
+                You have not earned a helper yet. Get all {PRETEST_QUESTION_COUNT} right on a skill
+                check in Woof School!
+              </p>
+            </TeacherNote>
+          )}
+        </div>
       </Sheet>
     </ScreenFrame>
   )

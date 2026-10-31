@@ -149,13 +149,15 @@ export function ProgressBar({
       aria-valuemin={0}
       aria-valuemax={max}
       aria-label={label}
-      className="h-4 w-full overflow-hidden rounded-pill bg-indigo-soft"
+      className="relative h-4 w-full overflow-hidden rounded-pill bg-indigo-soft shadow-[inset_0_2px_3px_0_rgb(26_35_126/0.18)]"
     >
       {/* Never linear: linear fills read as a stall (art bible 10.1). */}
       <div
-        className="h-full bg-turquoise transition-[width] duration-400 ease-out"
-        style={{ width: `${pct}%` }}
-      />
+        className="relative h-full min-w-[16px] overflow-hidden rounded-pill bg-[linear-gradient(90deg,var(--color-turquoise),var(--color-lime))] shadow-[inset_0_1.5px_0_0_rgb(255_255_255/0.5)] transition-[width] duration-500 ease-out"
+        style={{ width: `${pct}%`, opacity: pct === 0 ? 0 : 1 }}
+      >
+        <span aria-hidden="true" className="progress-sheen absolute inset-y-0 -left-1/2 w-1/2" />
+      </div>
     </div>
   )
 }

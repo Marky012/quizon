@@ -131,7 +131,7 @@ export interface SyncPayload {
    * later without changing this contract.
    */
   missedQuestionIds: string[]
-  /** The full student report, built by the same code that prints the record. */
+  /** The full student report, built by the same code that renders the record. */
   report: StudentReport
 }
 

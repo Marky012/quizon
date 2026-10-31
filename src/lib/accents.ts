@@ -65,6 +65,27 @@ export function accentInk(accent: Accent): string {
 }
 
 /**
+ * A light that reads ON AN INDIGO SURFACE. The vivid accents glow as
+ * themselves; indigo and navy would vanish into the card, so they borrow their
+ * light tint instead. Used by the Woof School corner glow, the halo behind
+ * each pup and the lesson number.
+ */
+const ACCENT_GLOW_VAR: Record<Accent, string> = {
+  turquoise: 'var(--color-turquoise)',
+  violet: 'var(--color-violet)',
+  yellow: 'var(--color-yellow)',
+  lime: 'var(--color-lime)',
+  indigo: 'var(--color-indigo-soft)',
+  navy: 'var(--color-indigo-soft)',
+  cream: 'var(--color-cream)',
+  'turquoise-deep': 'var(--color-turquoise-deep)',
+}
+
+export function accentGlowVar(accent: Accent): string {
+  return ACCENT_GLOW_VAR[accent]
+}
+
+/**
  * TRUE for the accents that need a visible outline to exist at all.
  *
  * Franky's cream coat on a cream page disappears, which is exactly the case

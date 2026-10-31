@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Boot } from '@/screens/Boot'
 import { useGameStore } from '@/store/gameStore'
+import { __setInstallPromptForTests } from '@/lib/install'
 
 /* ===========================================================================
    THE BOOT SCREEN.
@@ -186,5 +187,42 @@ describe('the boot navigation', () => {
 
     expect(currentPath).toBe('/hub')
     expect(container.querySelector('img[src="/assets/brand/quizon-logo.png"]')).toBeNull()
+  })
+})
+
+describe('the first-run install offer', () => {
+  beforeEach(() => {
+    window.localStorage.removeItem('quizon.installOfferAnswered')
+    __setInstallPromptForTests({
+      prompt: async () => {},
+      userChoice: Promise.resolve({ outcome: 'dismissed', platform: 'web' }),
+    } as never)
+  })
+  afterEach(() => {
+    __setInstallPromptForTests(null)
+    window.localStorage.removeItem('quizon.installOfferAnswered')
+  })
+
+  it('stops at 100% to offer the download, with a way to carry on in the browser', async () => {
+    renderAt('/')
+    await settle()
+    await act(async () => {
+      warm.finish()
+    })
+    await settle()
+
+    expect(currentPath).toBe('/')
+    expect(container.textContent).toContain('Download the game')
+    const carryOn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Continue playing in browser'),
+    )
+    expect(carryOn).toBeTruthy()
+
+    await act(async () => {
+      carryOn!.click()
+    })
+    await settle()
+    expect(currentPath).toBe('/welcome')
+    expect(window.localStorage.getItem('quizon.installOfferAnswered')).toBe('1')
   })
 })

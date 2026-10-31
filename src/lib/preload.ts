@@ -84,6 +84,10 @@ const ART: readonly string[] = [
   '/assets/players/boy.png',
   '/assets/players/girl.png',
   ...Object.keys(PUP_BY_ID).map((id) => `/assets/pups/${id}-avatar.png`),
+  '/assets/teacher/teacher-idle.png',
+  '/assets/teacher/teacher-happy.png',
+  '/assets/teacher/teacher-support.png',
+  '/assets/teacher/teacher-hint.png',
 ]
 
 function delay(ms: number): Promise<void> {

@@ -126,18 +126,19 @@ export function Sheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative max-h-[80dvh] w-full max-w-2xl animate-slide-up overflow-y-auto rounded-t-[24px] bg-cream p-4 pb-[max(16px,env(safe-area-inset-bottom))] shadow-[0_-14px_32px_-14px_rgba(26,35,126,0.55)]"
+        className="relative max-h-[85dvh] w-full max-w-2xl animate-slide-up overflow-y-auto rounded-t-[28px] bg-cream p-5 pb-[max(20px,env(safe-area-inset-bottom))] shadow-[0_-18px_38px_-14px_rgba(26,35,126,0.65)] ring-2 ring-indigo/10"
       >
-        <div className="mx-auto mb-3 h-2 w-14 rounded-pill bg-navy/25" />
-        <div className="mb-3 flex items-start justify-between gap-3">
-          <h2 className="text-[22px] leading-7 text-indigo">{title}</h2>
+        <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-turquoise via-yellow to-violet" />
+        <div className="mx-auto mb-3.5 mt-0.5 h-1.5 w-14 rounded-pill bg-navy/20" />
+        <div className="mb-4 flex items-center justify-between gap-3 border-b border-indigo/10 pb-3">
+          <h2 className="font-display text-[22px] font-bold leading-7 text-indigo">{title}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label={labelClose}
-            className="btn-chunky flex h-11 w-11 shrink-0 items-center justify-center bg-turquoise text-on-turquoise"
+            className="btn-chunky flex h-10 w-10 shrink-0 items-center justify-center bg-indigo-soft text-indigo hover:bg-turquoise hover:text-on-turquoise"
           >
-            <span aria-hidden="true" className="text-[20px] leading-none">
+            <span aria-hidden="true" className="text-[18px] font-bold leading-none">
               ✕
             </span>
           </button>

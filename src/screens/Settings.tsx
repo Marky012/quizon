@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { NetworkBadge } from '@/components/NetworkBadge'
 import { ScreenFrame, useBack } from '@/components/ScreenFrame'
 import { SyncBadge } from '@/components/SyncBadge'
-import { play, setSoundEnabled } from '@/lib/audio'
+import { FEATURES, ROADMAP } from '@/constants/features'
+import { play } from '@/lib/audio'
 import { useReducedMotion } from '@/lib/useReducedMotion'
 import { WORLD } from '@/content/world'
 import { useGameStore } from '@/store/gameStore'
@@ -35,24 +36,19 @@ import { syncConfigured } from '@/sync/client'
    and the badge is reassurance, not a warning.
    =========================================================================== */
 
-/* THE CLASS LINK IS CLOSED WHILE THE TEACHER SIDE IS REBUILT.
-   The device-to-dashboard path works, but the rest of the teacher workflow
-   (rosters, class management, what an adult sees) is still being built, and a
-   code box on a child's device is a promise that the whole loop is ready. It
-   is not. The form and its handlers are kept behind this flag rather than
-   deleted, so reopening is one line and the deliberately-careful copy (typed
-   offline, nothing to remember) is not lost.
-
-   `: boolean` on purpose: as the literal `false`, TypeScript narrows the open
-   branch to never, and the code that keeps this feature working would stop
-   being type-checked while it waits. */
-const TEACHER_FEATURES_OPEN: boolean = false
+/* THE CLASS LINK IS CLOSED WHILE THE TEACHER SIDE IS REBUILT. The flag lives
+   in constants/features.ts so every roadmap item opens from one place. The
+   form and its handlers are kept behind it rather than deleted, so reopening is
+   one line and the deliberately-careful copy (typed offline, nothing to
+   remember) is not lost. */
 
 export function Settings() {
   const navigate = useNavigate()
   const back = useBack()
   const soundEnabled = useGameStore((s) => s.soundEnabled)
   const toggleSound = useGameStore((s) => s.toggleSound)
+  const playerFullName = useGameStore((s) => s.playerFullName)
+  const playerNickname = useGameStore((s) => s.playerNickname)
   const classCode = useGameStore((s) => s.classCode)
   const setClassCode = useGameStore((s) => s.setClassCode)
   const reduced = useReducedMotion()
@@ -85,14 +81,11 @@ export function Settings() {
           <button
             type="button"
             onClick={() => {
-              /* The store is the source of truth, but audio.ts keeps its own
-                 module-level flag and nothing else pushes the change into it -
-                 Arena and Record read the flag and re-render, they do not set it.
-                 Without this the button would move the label and change nothing
-                 audible. */
+              /* main.tsx subscribes to the store and pushes every change into
+                 audio.ts, so this only has to flip the store. The confirmation
+                 tick is played here because turning sound ON must be audible. */
               const next = !soundEnabled
               toggleSound()
-              setSoundEnabled(next)
               if (next) play('tap')
             }}
             aria-pressed={soundEnabled}
@@ -107,7 +100,10 @@ export function Settings() {
             <span className="min-w-0 flex-1">
               <span className="block font-display text-[19px] leading-6 text-indigo">Sound</span>
               <span className="block text-[14px] leading-5 text-navy/80">
-                {soundEnabled ? 'Sound on' : 'Sound off'}
+                {soundEnabled ? 'Music & effects on' : 'Music & effects off'}
+              </span>
+              <span className="block text-[12px] leading-4 text-navy/60">
+                Volume slider coming soon.
               </span>
             </span>
           </button>
@@ -122,6 +118,43 @@ export function Settings() {
           </p>
         </li>
 
+        <li className="card-cream p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-display text-[19px] leading-6 text-indigo">Your profile</p>
+              <p className="mt-1 text-[14px] leading-5 text-navy/80">
+                {playerFullName || 'No name yet.'}
+                {playerNickname ? ` — called ${playerNickname}` : ''}
+              </p>
+            </div>
+            <span className="shrink-0 rounded-pill bg-yellow px-3 py-1 font-display text-[13px] leading-5 text-indigo">
+              Coming soon
+            </span>
+          </div>
+          <p className="mt-2 text-[14px] leading-5 text-navy/80">
+            {FEATURES.profileEdit
+              ? 'Change your name and nickname here.'
+              : 'Changing your name and nickname is coming soon.'}
+          </p>
+        </li>
+
+        <li className="card-cream p-4">
+          <p className="font-display text-[19px] leading-6 text-indigo">What&apos;s next</p>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {ROADMAP.map((item) => (
+              <li
+                key={item}
+                className="flex items-center justify-between gap-3 text-[14px] leading-5 text-navy/80"
+              >
+                <span>{item}</span>
+                <span className="shrink-0 rounded-pill bg-yellow px-2.5 py-0.5 font-display text-[12px] leading-5 text-indigo">
+                  Coming soon
+                </span>
+              </li>
+            ))}
+          </ul>
+        </li>
+
         {/* THE CLASS LINK.
 
             The teacher creates a class and gets a short code. The learner
@@ -134,7 +167,7 @@ export function Settings() {
             all. The record waits on the device and goes when the teacher
             opens the hotspot. */}
         {canSync &&
-          (TEACHER_FEATURES_OPEN ? (
+          (FEATURES.teacherSync ? (
             <li className="card-cream p-4">
               <p className="font-display text-[19px] leading-6 text-indigo">Sync to your class</p>
 
@@ -225,10 +258,10 @@ export function Settings() {
             </li>
           ))}
 
-        {/* The learner code card that was here was removed 2026-10-05. The code
-            is still generated and still used in the export filename and the
-            printed record - it is only hidden from the interface until the
-            teacher workflow is designed. See Welcome.tsx. */}
+        {/* The learner code card was removed 2026-10-05. The code is still
+            generated and still used by the sync record, but it is hidden from
+            the interface until the teacher workflow is designed. See
+            Welcome.tsx. */}
       </ul>
 
       <button

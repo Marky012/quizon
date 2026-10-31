@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { StepIndicator } from '@/components/StepIndicator'
 import { useReducedMotion } from '@/lib/useReducedMotion'
@@ -266,7 +266,7 @@ export function StageCarousel({
                  sky made their blurbs hard to read and made the row look
                  half-loaded. lg:scale-100 must come after scale-[0.82] in the
                  cascade - Tailwind emits media variants last, so it does. */
-              className="shrink-0 snap-center opacity-45 scale-[0.82] transition-[transform,opacity] duration-300 ease-out data-[active=true]:scale-100 data-[active=true]:opacity-100 lg:scale-100 lg:opacity-100"
+              className="shrink-0 snap-center opacity-55 scale-[0.84] saturate-75 transition-[transform,opacity,filter] duration-300 ease-out data-[active=true]:scale-100 data-[active=true]:opacity-100 data-[active=true]:saturate-100 data-[active=true]:drop-shadow-[0_18px_22px_rgba(26,35,126,0.35)] lg:scale-100 lg:opacity-100 lg:saturate-100"
               style={{ width: 'var(--card-w)' }}
             >
               {/* THE LABEL SITS ON TOP OF THE CARD, NOT INSIDE IT. It is a
@@ -477,9 +477,11 @@ function Arrow({
          beside them to crowd.
          touch-manipulation drops the ~300ms double-tap-zoom wait, which on a
          rapid repeated tap reads as the button ignoring the first press. */
-      className="btn-chunky flex h-14 w-14 shrink-0 touch-manipulation items-center justify-center bg-turquoise text-[26px] leading-none text-on-turquoise select-none disabled:opacity-40"
+      className="btn-chunky flex h-14 w-14 shrink-0 touch-manipulation items-center justify-center rounded-full bg-turquoise text-on-turquoise select-none disabled:opacity-35"
     >
-      {direction === 'left' ? '‹' : '›'}
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d={direction === 'left' ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'} />
+      </svg>
     </button>
   )
 }

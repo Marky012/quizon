@@ -23,7 +23,7 @@ import { useGameStore } from '@/store/gameStore'
        small brand-and-settings strip rather than a title bar.
 
    So the shell is written out here. The trade is real: Hub no longer inherits
-   focus management, the safe-area padding, or the print styles that
+   focus management, the safe-area padding, or the layout styles that
    ScreenFrame centralises. The safe-area insets are copied in below.
 
    THREE STAGES, since Pup Roster was deleted on 2026-10-05. The unlock rules
@@ -165,34 +165,30 @@ export function Hub() {
         className="sticky top-0 z-30 px-4"
         style={{ paddingTop: 'max(26px, env(safe-area-inset-top))', paddingBottom: 12 }}
       >
-        <div className="mx-auto grid w-full max-w-4xl grid-cols-[72px_1fr_72px] items-center gap-2">
+        <div className="mx-auto grid w-full max-w-4xl grid-cols-[48px_1fr_48px] items-center gap-2 sm:grid-cols-[72px_1fr_72px]">
           <img
             src="/assets/brand/quizon-logo.png"
             alt=""
             width={72}
             height={72}
             aria-hidden="true"
-            className="h-[72px] w-[72px] shrink-0 drop-shadow-[0_3px_0_rgba(26,43,76,0.35)]"
+            className="h-12 w-12 shrink-0 drop-shadow-[0_3px_0_rgba(26,43,76,0.35)] sm:h-[72px] sm:w-[72px]"
           />
 
-          {/* HUGE, and split by hand. WORLD.gameName is the string 'QuizOn!' and
-              colouring "Quiz" and "On!" differently needs the two runs to exist as
-              separate elements - there is no reliable way to split a display name
-              at runtime. The trade is that the header now owns its own spelling
-              instead of reading it from the world config; if gameName ever changes,
-              this line has to change with it. */}
+          {/* Scaled responsibly: compact text-[26px] on mobile to preserve breathing room,
+              and full text-[56px] on larger screens. */}
           <p
-            className="min-w-0 truncate text-center font-display text-[48px] leading-none sm:text-[56px]"
+            className="min-w-0 truncate text-center font-display text-[26px] leading-none tracking-tight sm:text-[56px]"
             style={{
               textShadow:
-                '0 3px 0 var(--color-navy), 0 0 10px rgba(26,43,76,0.55)',
+                '0 2px 0 var(--color-navy), 0 0 10px rgba(26,43,76,0.55)',
             }}
           >
             <span className="text-white">Quiz</span>
             <span className="text-[#e6b800]">On!</span>
           </p>
 
-          <SettingsButton className="h-[72px] w-[72px] justify-self-end [&_svg]:h-9 [&_svg]:w-9" />
+          <SettingsButton className="h-12 w-12 justify-self-end rounded-2xl [&_svg]:h-6 [&_svg]:w-6 sm:h-[72px] sm:w-[72px] sm:rounded-button sm:[&_svg]:h-9 sm:[&_svg]:w-9" />
         </div>
       </header>
 

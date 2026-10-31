@@ -19,7 +19,7 @@ import {
 
    The problem this solves. Every screen used to be imported eagerly into one
    bundle, so a learner on a first visit downloaded the entire app - the full
-   360-question bank, all eleven screens, the print and export machinery -
+   360-question bank, all eleven screens, the sync machinery -
    before seeing a single word. Measured at 683kB. The split goes at the route
    boundary, because that is where the app genuinely diverges.
 

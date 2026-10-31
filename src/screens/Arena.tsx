@@ -92,7 +92,7 @@ export function Arena() {
       title={WORLD.stages.arena.name}
       subtitle="Three places to visit"
       onBack={back}
-      headerRight={<SettingsButton className="h-14 w-14" />}
+      headerRight={<SettingsButton className="h-12 w-12 rounded-2xl [&_svg]:h-6 [&_svg]:w-6 sm:h-14 sm:w-14 sm:rounded-button sm:[&_svg]:h-7 sm:[&_svg]:w-7" />}
     >
       {resume && resumeTier && (
         <section
@@ -244,7 +244,10 @@ export function Arena() {
             : `${tier.name}. Level ${index + 1}, locked. ${requirement}`
 
           return (
-            <li key={id}>
+            <li
+              key={id}
+              style={{ animation: 'var(--animate-card-in)', animationDelay: `${index * 90}ms` }}
+            >
               <button
                 type="button"
                 onClick={() => {
@@ -285,16 +288,30 @@ export function Arena() {
                         </span>
                       )}
                     </span>
-                    <span
-                      className={`truncate text-[13px] leading-5 ${open ? 'text-cream/75' : 'text-navy/60'
-                        }`}
-                    >
-                      {tier.tagalog}
+                    <span className="flex items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className={`text-[12px] leading-5 tracking-[0.18em] ${open ? 'text-yellow' : 'text-navy/40'}`}
+                      >
+                        {'★'.repeat(index + 1)}
+                        <span className="opacity-30">{'★'.repeat(TIER_ORDER.length - index - 1)}</span>
+                      </span>
+                      <span
+                        className={`truncate text-[13px] leading-5 ${open ? 'text-cream/75' : 'text-navy/60'
+                          }`}
+                      >
+                        {tier.tagalog}
+                      </span>
                     </span>
                   </span>
 
-                  <span className="shrink-0">
-                    <PupAvatar pup={helper} size={52} />
+                  <span
+                    className={`shrink-0 rounded-full p-1 ${open
+                        ? 'bg-cream/10 ring-1 ring-cream/25'
+                        : 'bg-cream/5 ring-1 ring-cream/10 opacity-60 grayscale'
+                      }`}
+                  >
+                    <PupAvatar pup={helper} size={56} plain />
                   </span>
                 </span>
 
@@ -321,9 +338,15 @@ export function Arena() {
                       <span className="rounded-pill bg-cream/15 px-2.5 py-1 text-[12px] font-bold text-cream/90">
                         Pass {PASSING_SCORE}%
                       </span>
-                      <span className="ml-auto text-[12px] font-bold text-cream/85">
-                        {statusLine}
+                      <span className="ml-auto inline-flex items-center gap-1.5 rounded-pill bg-turquoise py-1 pl-2 pr-3 text-[12px] font-extrabold text-on-turquoise shadow-[inset_0_1.5px_0_0_rgb(255_255_255/0.4),0_2px_0_0_rgb(0_0_0/0.15)]">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" className="h-3.5 w-3.5">
+                          <path d="M8 5.14v14l11-7z" />
+                        </svg>
+                        {attempts > 0 ? 'Play again' : 'Play'}
                       </span>
+                    </span>
+                    <span className="text-[12px] font-bold text-cream/80">
+                      {statusLine}
                     </span>
                   </>
                 ) : (

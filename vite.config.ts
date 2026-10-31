@@ -67,7 +67,8 @@ export default defineConfig({
       workbox: {
         // NO VIDEO. The reference app was 142 MB purely from lesson video and
         // that is the single biggest memory win available. Total budget here
-        // is ~12 MB so a cheap Android phone precaches in seconds.
+        // is now ~20 MB, mostly the one 4 MB music loop, so a cheap Android
+        // phone still precaches in a few seconds.
         //
         // THE PATTERNS MUST BE `**/*.ext`, NOT `ext`.
         //
@@ -97,7 +98,11 @@ export default defineConfig({
         // `maxEnt` is deliberately absent on globPatterns. Workbox precaches all
         // matches, and this app's whole offline promise depends on every route
         // chunk being in there, not on the newest few.
-        globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2,ico}'],
+        //
+        // MP3 IS INCLUDED for the single background-music loop (~4 MB). That
+        // pushes the total precache to roughly 20 MB; the loop is worth it and
+        // still loads in a few seconds on the school wifi.
+        globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2,ico,mp3}'],
         maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         navigateFallback: '/index.html',
