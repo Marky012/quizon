@@ -32,10 +32,12 @@ import { useGameStore, type ActiveAttempt, type GameState, type SkillProgress, t
    the old state until a refresh, which is exactly the kind of stale-truth bug
    this codebase keeps recording.
 
-   AND THE OTHER RULE: nothing in src/dev is reachable in a production build. The
-   route is registered behind import.meta.env.DEV in App.tsx, which Vite folds to
-   a literal false, so the dynamic import below lands in dead code and is dropped.
-   Verify with `npm run build` and confirm no DevIndex chunk is emitted.
+   AND THE OTHER RULE: nothing in src/dev is reachable in the LEARNER build. The
+   route is registered behind import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === '1'
+   in App.tsx, so a learner build (no VITE_DEV_MODE) folds the whole condition to
+   false and drops the dynamic import as dead code. Only the devmode build
+   (VITE_DEV_MODE=1) keeps it. Verify with `npm run build` and confirm no
+   DevIndex chunk is emitted.
    =========================================================================== */
 
 /** A route to open, and what it is for. `note` is the QA reason to look. */

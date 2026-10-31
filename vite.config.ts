@@ -4,6 +4,10 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'node:path'
 
+/** True only on the devmode Netlify build. Renames the installed PWA so a
+ *  dev install is distinguishable from the learner app. */
+const DEV_MODE = process.env.VITE_DEV_MODE === '1'
+
 export default defineConfig({
   plugins: [
     react(),
@@ -41,8 +45,8 @@ export default defineConfig({
       // no glob matches it - a file that both match will break the install
       // again, exactly as it did.
       manifest: {
-        name: 'QuizOn! - The Reading Quest',
-        short_name: 'QuizOn!',
+        name: DEV_MODE ? 'QuizOn! DEV' : 'QuizOn! - The Reading Quest',
+        short_name: DEV_MODE ? 'QuizOn DEV' : 'QuizOn!',
         description:
           'The offline-first game for Grade 5 learners in Barangay Quezon, Tagbina. Learn, earn your Woof helpers, and take on the challenge.',
         lang: 'en',

@@ -32,15 +32,16 @@ import {
    screens that need one can be reviewed without earning it first. See
    src/dev/bypass.ts for why a bypass is worth having at all.
 
-   GUARDED, AND THE GUARD IS THE POINT. Vite replaces import.meta.env.DEV with a
-   literal false in a production build, so DevRoute becomes null, the dynamic
-   import below is unreachable, and the bundler drops it - there is no dev screen
-   in a shipped bundle and no way to navigate to one. Do not move this behind a
-   runtime check like a query parameter or localStorage flag: a value that is
-   still false at runtime is not something the bundler can prove dead, and a
-   QA tool that ships to a classroom is a QA tool a child can reach.
+   GUARDED, AND THE GUARD IS THE POINT. The learner build has no VITE_DEV_MODE,
+   so the second half of the OR folds to undefined === '1' which is literal
+   false, and Vite already replaced import.meta.env.DEV with false - DevRoute
+   becomes null, the dynamic import below is unreachable, and the bundler drops
+   it. Only the devmode build (VITE_DEV_MODE=1) keeps the route. Do not move
+   this behind a runtime check like a query parameter or localStorage flag: a
+   value that is still false at runtime is not something the bundler can prove
+   dead, and a QA tool that ships to a classroom is a QA tool a child can reach.
    =========================================================================== */
-const DevRoute: LazyRoute | null = import.meta.env.DEV
+const DevRoute: LazyRoute | null = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === '1'
   ? lazyRoute(
       () => import('@/dev/DevIndex').then((m) => ({ default: m.DevIndex })),
       DevFallback,
@@ -218,7 +219,8 @@ export function App() {
         <Route path="/pups" element={<Navigate to="/hub" replace />} />
         <Route path="/progress" element={<Navigate to="/record" replace />} />
 
-        {/* Dev only. Renders nothing in a production build - see DevRoute above. */}
+        {/* Dev only. Absent from the learner build; present only when
+            VITE_DEV_MODE=1 (devmode build). See DevRoute above. */}
         {DevRoute && <Route path="/dev" element={<LazyScreen route={DevRoute} />} />}
 
         <Route path="*" element={<NotFound />} />

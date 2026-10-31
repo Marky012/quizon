@@ -51,7 +51,8 @@ export function DevIndex() {
     >
       <div className="flex flex-col gap-5">
         <p className="card-cream p-3 text-[15px] leading-6 text-indigo">
-          Nothing here reaches a production build. Pick a state first, then open a
+          This is the devmode build. Nothing here exists in the learner build.
+          Pick a state first, then open a
           screen - a screen opened against the wrong state will show its lock
           message instead of its content.
         </p>

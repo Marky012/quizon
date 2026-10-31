@@ -10,6 +10,11 @@
  */
 interface ImportMetaEnv {
   readonly VITE_SYNC_ENDPOINT?: string
+  /**
+   * Turns on the /dev screen index in an otherwise production build. Set only
+   * on the devmode Netlify site; never on the learner site.
+   */
+  readonly VITE_DEV_MODE?: string
 }
 
 interface Import {

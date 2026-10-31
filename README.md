@@ -393,6 +393,25 @@ npm run build      # -> dist/
 { "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
 ```
 
+### Devmode build (testers only)
+
+A second Netlify site (`quizon-student-devmode`) builds the same `main` branch with one extra environment variable:
+
+```
+VITE_DEV_MODE=1
+```
+
+That build exposes `/dev` — a screen index with state presets for reviewing screens that normally need earned progress. The learner build does not set the flag, so the route is still tree-shaken out.
+
+Do **not** set `VITE_SYNC_ENDPOINT` on the devmode site; preset progress must never reach the real teacher dashboard.
+
+Local check (PowerShell):
+
+```powershell
+$env:VITE_DEV_MODE="1"; npm run build; Remove-Item Env:\VITE_DEV_MODE
+npm run preview   # open http://localhost:8080/dev
+```
+
 ---
 
 <a id="roadmap"></a>
