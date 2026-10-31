@@ -422,6 +422,8 @@ npm run preview   # open http://localhost:8080/dev
 - [ ] More local passages, and a Filipino (Tagalog) narration layer for the passages and feedback
 - [ ] Text-to-speech read-aloud for passages, so pre-readers and screen-reader users get the same content
 - [ ] Show the missed item TEXT on the teacher dashboard, not just the ids
+- [ ] Settings: a text-size control so the text can be resized (Teacher Reyes asked for larger)
+- [ ] Learner profile photo
 
 ---
 
