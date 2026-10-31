@@ -23,6 +23,12 @@
    screen, where the app is opening and there is nothing else to do, and the
    welcome screen, where the child is choosing a helper and has time to think
    about it. It is never in the way of the quiz.
+
+   THE BOOT GATE IS ALSO HERE. `bootSeen` is the one fact that separates a very
+   first launch (offer the download) from every launch after it (preload, then
+   a start button). It is deliberately a localStorage flag, not part of the
+   persisted game state: a child who has never started a profile still gets the
+   download offer, and clearing game progress must not replay the download.
    =========================================================================== */
 
 /**
@@ -93,6 +99,24 @@ export function installAvailable(): boolean {
 }
 
 /**
+ * Is the app already running as an installed app?
+ *
+ * An installed app has already been downloaded, so it must never be shown the
+ * first-launch download screen even if localStorage is empty.
+ */
+export function isStandalone(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true
+    )
+  } catch {
+    return false
+  }
+}
+
+/**
  * Show the browser's install dialog.
  *
  * The event is spent once it is used - the browser will not let the same
@@ -117,23 +141,23 @@ export async function promptInstall(): Promise<'accepted' | 'dismissed' | 'unava
   }
 }
 
-const GATE_KEY = 'quizon.installOfferAnswered'
+const BOOT_SEEN_KEY = 'quizon.bootSeen'
 
-/** Has the learner already answered the first-run install offer (install OR continue in browser)? */
-export function installOfferAnswered(): boolean {
+/** Has this device already been through the boot gate once? */
+export function bootSeen(): boolean {
   try {
-    return window.localStorage.getItem(GATE_KEY) === '1'
+    return window.localStorage.getItem(BOOT_SEEN_KEY) === '1'
   } catch {
     return false
   }
 }
 
-/** Remember the answer so the offer is made once, not on every launch. */
-export function markInstallOfferAnswered(): void {
+/** Remember that the boot gate was answered, so the download offer is not repeated. */
+export function markBootSeen(): void {
   try {
-    window.localStorage.setItem(GATE_KEY, '1')
+    window.localStorage.setItem(BOOT_SEEN_KEY, '1')
   } catch {
-    /* private mode: the offer simply repeats next launch */
+    /* private mode: the download offer simply repeats next launch */
   }
 }
 

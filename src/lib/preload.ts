@@ -1,5 +1,6 @@
 import { PUP_BY_ID } from '@/content/manifest'
 import { ALL_ROUTES } from '@/lazyRoutes'
+import { musicReady } from '@/lib/audio'
 
 /* ===========================================================================
    THE WARM-UP - what the boot screen is actually doing while the bar fills.
@@ -19,9 +20,10 @@ import { ALL_ROUTES } from '@/lazyRoutes'
        it paints in the frame it is needed.
      - the two web fonts, so no line of text reflows after the first paint.
 
-   WHAT IS NOT WAITED FOR. The service worker. It does not affect what the
-   learner sees next, and it registers itself; see serviceWorkerReady for why
-   sitting on it would be wrong.
+   THE SERVICE WORKER IS PART OF THE WAIT IN PRODUCTION. Its precache is what
+   makes the whole game work offline, so the download is not finished until
+   the worker is ready. In development there is no worker, so that task is
+   skipped rather than left to hang forever.
 
    WHAT IS NOT FETCHED AT ALL. The teacher's dashboard endpoint is never
    touched from here. A learner device with no class attached never reaches
@@ -44,22 +46,20 @@ import { ALL_ROUTES } from '@/lazyRoutes'
  */
 export const MIN_BOOT_MS = 700
 
-/**
- * The hard cap.
- *
- * A child on a school hotspot that has just died would otherwise sit in front
- * of a progress bar for as long as the network takes to time out, which on a
- * phone can be minutes. Eight seconds is long enough for a real download to
- * finish and short enough that a dead network is survivable.
- *
- * When the cap fires the warm-up KEEPS RUNNING in the background - it is
- * still filling the cache, and the next visit benefits from it - and the
- * learner simply goes in.
- */
-export const MAX_BOOT_MS = 8000
-
 /** How long the fonts get before they are given up on. */
 const FONT_TIMEOUT_MS = 4000
+
+/**
+ * How long one file gets before it is given up on.
+ *
+ * Exists so a stalled request cannot hold the start button forever, not as a
+ * shortcut: on a working connection a 4 MB track finishes well inside this.
+ * The boot gate waits for every task to settle, one way or the other.
+ */
+const ASSET_TIMEOUT_MS = 20_000
+
+/** The service worker precaches ~20 MB on a first visit. */
+const SW_TIMEOUT_MS = 30_000
 
 /**
  * The art the app draws.
@@ -71,6 +71,7 @@ const FONT_TIMEOUT_MS = 4000
  */
 const ART: readonly string[] = [
   '/assets/brand/quizon-logo.png',
+  '/assets/brand/logo-mark.svg',
   '/assets/world/app-backdrop.jpg',
   '/assets/world/cloud01.png',
   '/assets/world/cloud02.png',
@@ -92,6 +93,16 @@ const ART: readonly string[] = [
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => globalThis.setTimeout(resolve, ms))
+}
+
+/**
+ * Settle a task within a bound, success or failure.
+ *
+ * The boot gate waits for every task, so no single stalled request may keep
+ * the start button off screen forever.
+ */
+function settle(task: Promise<unknown>, ms: number): Promise<void> {
+  return Promise.race([task.then(() => undefined, () => undefined), delay(ms)])
 }
 
 /**
@@ -122,8 +133,7 @@ function loadImage(src: string): Promise<void> {
  * The fonts, settled.
  *
  * They come from a CDN, so they get a timeout: a school wifi that is up for
- * the app's own files can still be blocking fonts.googleapis.com, and waiting
- * on that would hold the boot screen for the full MAX_BOOT_MS cap.
+ * the app's own files can still be blocking fonts.googleapis.com.
  */
 function fontsReady(): Promise<void> {
   if (typeof document === 'undefined' || !document.fonts) return Promise.resolve()
@@ -145,22 +155,13 @@ function fontsReady(): Promise<void> {
 /**
  * The service worker.
  *
- * NOT ONE OF THE BOOT'S TASKS, and this function is the reason that is a
- * decision rather than an oversight.
+ * A boot task in production, and only in production. The app is offline-first
+ * and that promise is kept by the worker's precache, which is why the download
+ * is not finished until the worker is ready.
  *
- * The app is offline-first and that promise is kept by a service worker, which
- * index.html registers on its own (the PWA plugin injects the register
- * script), so the worker is already on its way before this module runs.
- *
- * Waiting for it would be wrong twice over. It does not affect what the
- * learner sees next - the next screen is served from the network or from the
- * HTTP cache either way - and navigator.serviceWorker.ready NEVER settles on
- * a build with no worker registered at all, which is every dev build. A boot
- * screen that waits for it spends three seconds at 97% doing nothing.
- *
- * So the wait is fired and forgotten: the worker keeps precaching in the
- * background, which is what makes the NEXT visit work offline, and the boot
- * screen never sits on it.
+ * In development there is no worker registered at all, so
+ * navigator.serviceWorker.ready NEVER settles. That is why warmUp adds this
+ * task behind import.meta.env.PROD instead of always waiting on it.
  */
 function serviceWorkerReady(): Promise<void> {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
@@ -238,12 +239,14 @@ export function runTasks(
  */
 export function warmUp(): Promise<void> {
   const tasks: Promise<unknown>[] = [
-    ...ALL_ROUTES.map((route) => route.prefetch()),
-    ...ART.map((src) => loadImage(src)),
-    fontsReady(),
+    ...ALL_ROUTES.map((route) => settle(route.prefetch(), ASSET_TIMEOUT_MS)),
+    ...ART.map((src) => settle(loadImage(src), ASSET_TIMEOUT_MS)),
+    settle(fontsReady(), FONT_TIMEOUT_MS),
+    settle(musicReady(), ASSET_TIMEOUT_MS),
   ]
-  // Fired and forgotten: see serviceWorkerReady.
-  void serviceWorkerReady()
+  // The worker is where the offline copy lives. In dev there is none to wait
+  // for, so the task is skipped rather than left to hang.
+  if (import.meta.env.PROD) tasks.push(settle(serviceWorkerReady(), SW_TIMEOUT_MS))
   return runTasks(tasks, report)
 }
 
@@ -260,7 +263,7 @@ let warmupDone = false
 export function startWarmup(): Promise<void> {
   if (warmupPromise) return warmupPromise
   const startedAt = Date.now()
-  warmupPromise = Promise.race([warmUp(), delay(MAX_BOOT_MS)])
+  warmupPromise = warmUp()
     .then(() => undefined)
     .then(() => delay(Math.max(0, MIN_BOOT_MS - (Date.now() - startedAt))))
     .then(() => {

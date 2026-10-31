@@ -73,6 +73,30 @@ export function preloadMusic(): void {
   musicElement()
 }
 
+let musicReadyPromise: Promise<void> | null = null
+
+/** Resolves once the track can play. Never rejects: a missing file is silence. */
+export function musicReady(): Promise<void> {
+  const el = musicElement()
+  if (!el) return Promise.resolve()
+  if (el.readyState >= 2) return Promise.resolve()
+  if (musicReadyPromise) return musicReadyPromise
+  musicReadyPromise = new Promise<void>((resolve) => {
+    let settled = false
+    const done = () => {
+      if (settled) return
+      settled = true
+      el.removeEventListener('loadeddata', done)
+      el.removeEventListener('error', done)
+      resolve()
+    }
+    el.addEventListener('loadeddata', done)
+    el.addEventListener('error', done)
+    if (el.readyState >= 2) done()
+  })
+  return musicReadyPromise
+}
+
 /** Start (or resume) the loop. Never throws. */
 export function startMusic(): void {
   if (!enabled) return

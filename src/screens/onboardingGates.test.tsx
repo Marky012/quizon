@@ -36,10 +36,20 @@ import { useGameStore } from '@/store/gameStore'
    immediately and the routing is what is under test.
    =========================================================================== */
 
+/**
+ * `done` starts true: most tests mount Boot only as a bounce target, and a
+ * warm page passes straight through to the real destination without a start
+ * tap. The one test that drives Boot from cold sets it false first.
+ */
+const warm = vi.hoisted(() => ({ done: true }))
+
 vi.mock('@/lib/preload', () => ({
-  isWarmupDone: () => false,
+  isWarmupDone: () => warm.done,
   subscribeWarmup: () => () => {},
-  startWarmup: () => Promise.resolve(),
+  startWarmup: () => {
+    warm.done = true
+    return Promise.resolve()
+  },
 }))
 
 let container: HTMLDivElement
@@ -130,6 +140,7 @@ declare global {
 beforeEach(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true
   vi.useFakeTimers()
+  warm.done = true
   sessionStorage.clear()
   container = document.createElement('div')
   document.body.appendChild(container)
@@ -352,8 +363,13 @@ describe('one-way doors on the setup screens', () => {
   })
 
   it('Boot still owns "/" and resumes a returning learner at their own step', async () => {
+    // Cold page load: Boot warms up, stops at the start gate, then resumes.
+    warm.done = false
     setFlags({ hasStarted: true, profileCreated: false, introCompleted: false })
     renderAt('/')
+    await settle()
+    expect(currentPath).toBe('/')
+    await tap('Continue playing')
     await settle()
     expect(currentPath).toBe('/profile')
   })

@@ -1,52 +1,52 @@
 import { useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { ProgressBar } from '@/components/ScreenFrame'
 import { LoadingNote } from '@/components/Skeleton'
 import { WORLD } from '@/content/world'
 import { play } from '@/lib/audio'
 import {
+  bootSeen,
   installAvailable,
-  installOfferAnswered,
-  markInstallOfferAnswered,
+  isStandalone,
+  markBootSeen,
   promptInstall,
-  subscribeInstall,
 } from '@/lib/install'
 import { isWarmupDone, subscribeWarmup, startWarmup } from '@/lib/preload'
 import { useGameStore } from '@/store/gameStore'
 
 /* ===========================================================================
-   THE BOOT SCREEN.
+   THE BOOT GATE.
 
-   What this screen used to be: a redirector. It read three flags out of the
-   store and sent the learner to the right screen, and it did it instantly,
-   because the only thing that had to happen before the paint was reading
-   persisted state, and zustand's localStorage rehydration is synchronous.
+   Every page load stops here and nothing after it renders until the game is
+   whole. That is the promise the start button makes: when the learner presses
+   it, the next screen will not pop pictures in, fetch a route chunk, or start
+   the music halfway through a sentence.
 
-   What it is now: the loading screen, and the warm-up behind it.
+   THREE PHASES.
 
-   WHY THE WARM-UP LIVES HERE AND NOT IN THE BACKGROUND. Every screen after
-   this one is code-split, so every navigation the learner makes would
-   otherwise land on a skeleton while its chunk arrives, and every image
-   would arrive as a hole in the card it sits in. The boot screen is the one
-   moment in the game where a bar is expected rather than annoying, so the
-   fetching happens here and nowhere else. See lib/preload.ts for what is
-   fetched and why.
+   1. Download. Only on a very first launch. The child is offered the app, and
+      the download is the thing they choose - so the bar does not run before
+      that choice. An installed app never sees this phase.
 
-   THE SCREEN RUNS ONCE PER PAGE LOAD. Not once per visit to this route.
-   Welcome, Profile and Intro all bounce to "/" when they are done with the
-   setup spine, and a returning learner who types "/" lands here too - so if
-   the splash ran on every visit, the first-run experience would show the
-   loading screen three times in a row. lib/preload.ts remembers whether the
-   warm-up has already run in this page load, and when it has, this screen
-   redirects straight through.
+   2. Loading. Every launch, first or returning. The warm-up fetches every
+      route chunk, every picture, the fonts, the music track and (in
+      production) the service worker's offline precache. The bar reports real
+      tasks finishing, not a guess.
 
-   THE ORDER OF THE TWO CHECKS BELOW MATTERS. The splash renders until the
-   warm-up is done, and only then does the destination decision happen. It
-   was the other way round before - the decision was first and immediate - and
-   that is exactly why the bar could never appear: a first-time learner has
-   hasStarted === false, so the old screen redirected to /welcome before it
-   had drawn anything.
+   3. Start. "Start playing" on a fresh profile, "Continue playing" for a
+      learner with a game in progress. This is a deliberate tap, not a
+      redirect: the child gets a moment where the app is visibly ready, and a
+      returning child gets the same gate every time they open the game.
+
+   INTERNAL BOUNCES PASS THROUGH. Welcome, Profile and Intro all bounce back
+   to "/" when they are done, and a learner who types "/" lands here too. Once
+   the page has already warmed, this screen must not replay the gate - that
+   would put a second loading screen and a second tap in the middle of setup.
+   The `wasWarmAtMount` check is the difference between a fresh launch and a
+   bounce inside the same page load.
    =========================================================================== */
+
+type Phase = 'download' | 'loading' | 'start'
 
 /**
  * The tips that rotate under the bar.
@@ -67,31 +67,52 @@ const TIPS = [
 const TIP_MS = 3200
 
 export function Boot() {
+  const navigate = useNavigate()
   const hasStarted = useGameStore((s) => s.hasStarted)
   const profileCreated = useGameStore((s) => s.profileCreated)
   const introCompleted = useGameStore((s) => s.introCompleted)
 
-  const [pct, setPct] = useState(0)
-  const [ready, setReady] = useState(isWarmupDone)
-  const [tip, setTip] = useState(0)
-  const [canInstall, setCanInstall] = useState(installAvailable)
-  const [offerClosed, setOfferClosed] = useState(false)
+  /** True when this mount is an internal bounce, not a fresh launch. */
+  const [wasWarmAtMount] = useState(isWarmupDone)
 
-  useEffect(() => subscribeInstall(setCanInstall), [])
+  /**
+   * A device that has never been through the gate. An installed app is never
+   * "first", and a device with a game in progress is not first either - the
+   * download screen must never appear in front of a child mid-quest.
+   */
+  const [firstVisit] = useState(() => !bootSeen() && !hasStarted && !isStandalone())
+
+  const [phase, setPhase] = useState<Phase>(firstVisit ? 'download' : 'loading')
+  const [pct, setPct] = useState(0)
+  const [tip, setTip] = useState(0)
+
+  /** Where the start button goes. Same spine decision Boot has always made. */
+  const destination = !hasStarted
+    ? '/welcome'
+    : !profileCreated
+      ? '/profile'
+      : !introCompleted
+        ? '/intro'
+        : '/hub'
 
   useEffect(() => {
-    // Already warmed up in this page load: this is an internal bounce back to
-    // the spine, not a fresh launch, so there is nothing to show.
-    if (isWarmupDone()) return
+    if (wasWarmAtMount) return
+
     const unsubscribe = subscribeWarmup((p) => {
       setPct(Math.round((p.done / p.total) * 100))
     })
-    void startWarmup().then(() => {
-      setPct(100)
-      setReady(true)
-    })
+
+    // A returning learner starts downloading the moment the screen opens. A
+    // first visit waits for the button, because the download is the offer.
+    if (!firstVisit) {
+      void startWarmup().then(() => {
+        setPct(100)
+        setPhase('start')
+      })
+    }
+
     return unsubscribe
-  }, [])
+  }, [firstVisit, wasWarmAtMount])
 
   useEffect(() => {
     const id = globalThis.setInterval(() => {
@@ -100,30 +121,42 @@ export function Boot() {
     return () => globalThis.clearInterval(id)
   }, [])
 
-  /* THE FIRST-RUN INSTALL OFFER. After the bar hits 100% the app used to
-     redirect instantly, so the install button never had a moment on screen.
-     Now, once, if the browser can install the app and the learner has not
-     answered before, we stop here and ask: install, or carry on in the
-     browser. Either answer is remembered. */
-  const showOffer = ready && canInstall && !offerClosed && !installOfferAnswered()
-
-  function answerOffer(install: boolean) {
+  function begin(install: boolean) {
     play('tap')
-    markInstallOfferAnswered()
-    if (install) void promptInstall().finally(() => setOfferClosed(true))
-    else setOfferClosed(true)
+    markBootSeen()
+    setPhase('loading')
+    // The prompt must be called from this tap. It is fired alongside the
+    // warm-up, not awaited: a dismissed prompt must not stop the download.
+    if (install && installAvailable()) void promptInstall()
+    void startWarmup().then(() => {
+      setPct(100)
+      setPhase('start')
+    })
   }
 
-  if (showOffer) {
+  function enterGame() {
+    play('tap')
+    markBootSeen()
+    navigate(destination, { replace: true })
+  }
+
+  // A setup screen bounced back to "/" after the page was already warmed. Pass
+  // straight through - see INTERNAL BOUNCES above.
+  if (wasWarmAtMount) return <Navigate to={destination} replace />
+
+  const pageStyle = {
+    paddingTop: 'max(24px, env(safe-area-inset-top))',
+    paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
+  }
+
+  /* ---- 1. THE DOWNLOAD OFFER (very first launch only) ------------------- */
+  if (phase === 'download') {
     return (
       <main
         className="flex min-h-dvh flex-col items-center justify-center gap-5 px-6"
-        style={{
-          paddingTop: 'max(24px, env(safe-area-inset-top))',
-          paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
-        }}
+        style={pageStyle}
       >
-        <h1 className="sr-only">{`Install QuizOn!`}</h1>
+        <h1 className="sr-only">{`QuizOn! - ${WORLD.subtitle}`}</h1>
         <img
           src="/assets/brand/quizon-logo.png"
           alt=""
@@ -133,13 +166,13 @@ export function Boot() {
           className="h-[140px] w-[140px] animate-float drop-shadow-[0_10px_0_rgba(26,43,76,0.45)]"
         />
         <div className="card-cream animate-feedback-spring w-full max-w-sm p-5 text-center">
-          <p className="font-display text-[24px] leading-7 font-bold text-indigo">You are all set!</p>
+          <p className="font-display text-[24px] leading-7 font-bold text-indigo">Ready to play?</p>
           <p className="mt-1 text-[15px] leading-6 text-navy/80">
-            Put QuizOn! on this device so it opens like an app and works with no signal.
+            Download QuizOn! once, then it opens like an app and works with no signal.
           </p>
           <button
             type="button"
-            onClick={() => answerOffer(true)}
+            onClick={() => begin(true)}
             className="btn-chunky mt-4 flex w-full items-center justify-center gap-2 bg-indigo px-5 py-3.5 text-[17px] text-cream"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -147,11 +180,11 @@ export function Boot() {
               <path d="M7 10l5 5 5-5" />
               <path d="M4 19h16" />
             </svg>
-            Download the game
+            Download and play offline
           </button>
           <button
             type="button"
-            onClick={() => answerOffer(false)}
+            onClick={() => begin(false)}
             className="mt-3 w-full rounded-button px-5 py-3 text-[15px] font-bold text-indigo underline decoration-indigo/30 underline-offset-4 transition-colors hover:bg-indigo-soft/60 active:scale-[0.98]"
           >
             Continue playing in browser
@@ -161,74 +194,99 @@ export function Boot() {
     )
   }
 
-  /* THE SPOKEN PATH. The screen shows until the warm-up is done, and only
-     then does the app decide where the learner belongs. */
-  if (ready) {
-    if (!hasStarted) return <Navigate to="/welcome" replace />
-    if (!profileCreated) return <Navigate to="/profile" replace />
-    if (!introCompleted) return <Navigate to="/intro" replace />
-    return <Navigate to="/hub" replace />
+  /* ---- 2. THE WARM-UP --------------------------------------------------- */
+  if (phase === 'loading') {
+    /* Announced four times, not once per percent. A live region that changes
+       on every tick talks over the screen the learner is heading for. */
+    const quarter = Math.floor(pct / 25)
+    const spoken =
+      quarter >= 4 ? 'Ready.' : quarter === 0 ? 'Getting QuizOn! ready.' : `Loading, ${quarter * 25} percent.`
+
+    return (
+      <main
+        className="flex min-h-dvh flex-col items-center justify-center gap-6 px-6"
+        style={pageStyle}
+      >
+        {/* The heading is for screen readers. The visible wordmark is drawn into
+            the logo file, so printing it as text as well would say it twice. */}
+        <h1 className="sr-only">{`QuizOn! - ${WORLD.subtitle}`}</h1>
+
+        {/* The same mark Welcome and the Hub use, at the same 3px navy drop
+            shadow. The float is CSS and index.css neutralises it when the OS
+            asks for reduced motion. */}
+        <div className="relative">
+          <span aria-hidden="true" className="absolute inset-0 -z-10 scale-125 rounded-full bg-[radial-gradient(circle,rgb(255_255_255/0.75),transparent_65%)] blur-md" />
+          <img
+            src="/assets/brand/quizon-logo.png"
+            alt=""
+            width={200}
+            height={200}
+            aria-hidden="true"
+            className="h-[200px] w-[200px] animate-float drop-shadow-[0_10px_0_rgba(26,43,76,0.45)]"
+          />
+        </div>
+
+        <p className="font-display text-[22px] leading-7 font-bold text-indigo">{WORLD.subtitle}</p>
+
+        <div className="card-cream w-full max-w-sm bg-cream/95 p-5 backdrop-blur-sm">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-[15px] leading-6 font-semibold text-navy/80">
+              Getting the game ready…
+            </span>
+            <span className="font-display w-[68px] text-right text-[28px] leading-8 text-indigo tabular-nums">
+              {pct}%
+            </span>
+          </div>
+
+          {/* The same bar the quiz uses. Determinate on purpose: it reports real
+              progress, so it is never a lie about how long the wait is. */}
+          <div className="mt-2">
+            <ProgressBar value={pct} max={100} label="Getting QuizOn! ready" />
+          </div>
+
+          {/* min-h holds two lines, so a long tip does not push the card down
+              when the next one is shorter. */}
+          <p className="mt-3 min-h-[48px] text-[15px] leading-6 text-navy/80">{TIPS[tip]}</p>
+        </div>
+
+        <LoadingNote srOnly>{spoken}</LoadingNote>
+      </main>
+    )
   }
 
-  /* Announced four times, not once per percent. A live region that changes
-     on every tick talks over the screen the learner is heading for. */
-  const quarter = Math.floor(pct / 25)
-  const spoken =
-    quarter >= 4 ? 'Ready.' : quarter === 0 ? 'Getting QuizOn! ready.' : `Loading, ${quarter * 25} percent.`
-
+  /* ---- 3. THE START GATE ------------------------------------------------ */
   return (
     <main
-      className="flex min-h-dvh flex-col items-center justify-center gap-6 px-6"
-      style={{
-        paddingTop: 'max(24px, env(safe-area-inset-top))',
-        paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
-      }}
+      className="flex min-h-dvh flex-col items-center justify-center gap-5 px-6"
+      style={pageStyle}
     >
-      {/* The heading is for screen readers. The visible wordmark is drawn into
-          the logo file, so printing it as text as well would say it twice. */}
       <h1 className="sr-only">{`QuizOn! - ${WORLD.subtitle}`}</h1>
-
-      {/* The same mark Welcome and the Hub use, at the same 3px navy drop
-          shadow. The float is CSS and index.css neutralises it when the OS
-          asks for reduced motion. */}
-      <div className="relative">
-        <span aria-hidden="true" className="absolute inset-0 -z-10 scale-125 rounded-full bg-[radial-gradient(circle,rgb(255_255_255/0.75),transparent_65%)] blur-md" />
-        <img
-          src="/assets/brand/quizon-logo.png"
-          alt=""
-          width={200}
-          height={200}
-          aria-hidden="true"
-          className="h-[200px] w-[200px] animate-float drop-shadow-[0_10px_0_rgba(26,43,76,0.45)]"
-        />
+      <img
+        src="/assets/brand/quizon-logo.png"
+        alt=""
+        width={160}
+        height={160}
+        aria-hidden="true"
+        className="h-[140px] w-[140px] animate-float drop-shadow-[0_10px_0_rgba(26,43,76,0.45)]"
+      />
+      <div className="card-cream animate-feedback-spring w-full max-w-sm p-5 text-center">
+        <p className="font-display text-[24px] leading-7 font-bold text-indigo">All set!</p>
+        <p className="mt-1 text-[15px] leading-6 text-navy/80">
+          {hasStarted
+            ? 'Your helper is waiting. Pick up where you left off.'
+            : 'Everything is ready. Your quest is waiting.'}
+        </p>
+        <button
+          type="button"
+          onClick={enterGame}
+          className="btn-chunky mt-4 flex w-full items-center justify-center gap-2 bg-indigo px-5 py-3.5 text-[17px] text-cream"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8 5.14v14l11-7z" />
+          </svg>
+          {hasStarted ? 'Continue playing' : 'Start playing'}
+        </button>
       </div>
-
-      <p className="font-display text-[22px] leading-7 font-bold text-indigo">{WORLD.subtitle}</p>
-
-      <div className="card-cream w-full max-w-sm bg-cream/95 p-5 backdrop-blur-sm">
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[15px] leading-6 font-semibold text-navy/80">
-            {pct >= 100 ? 'All set!' : 'Getting the game ready…'}
-          </span>
-          <span className="font-display w-[68px] text-right text-[28px] leading-8 text-indigo tabular-nums">
-            {pct}%
-          </span>
-        </div>
-
-        {/* The same bar the quiz uses. Determinate on purpose: it reports real
-            progress, so it is never a lie about how long the wait is. */}
-        <div className="mt-2">
-          <ProgressBar value={pct} max={100} label="Getting QuizOn! ready" />
-        </div>
-
-        {/* min-h holds two lines, so a long tip does not push the card down
-            when the next one is shorter. */}
-        <p className="mt-3 min-h-[48px] text-[15px] leading-6 text-navy/80">{TIPS[tip]}</p>
-      </div>
-
-      <LoadingNote srOnly>{spoken}</LoadingNote>
-
-      {/* The install offer now lives on its own step after 100% (see showOffer). */}
     </main>
   )
 }
