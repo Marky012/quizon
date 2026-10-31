@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ScreenFrame } from '@/components/ScreenFrame'
 import { StepIndicator } from '@/components/StepIndicator'
+import { CheckGlyph } from '@/components/LessonParts'
 import { play } from '@/lib/audio'
 import { MAX_FULL_NAME, MAX_NICKNAME } from '@/constants/gameConfig'
 import { ONBOARDING_TOTAL, STEP_PROFILE } from '@/constants/onboarding'
@@ -215,9 +216,9 @@ export function Profile() {
                 {active && (
                   <span
                     aria-hidden="true"
-                    className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo text-[12px] font-bold text-cream"
+                    className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo text-cream"
                   >
-                    ✓
+                    <CheckGlyph className="h-3 w-3" />
                   </span>
                 )}
                 <img

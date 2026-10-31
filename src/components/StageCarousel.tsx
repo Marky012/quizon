@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { StepIndicator } from '@/components/StepIndicator'
+import { StarGlyph } from '@/components/LessonParts'
 import { useReducedMotion } from '@/lib/useReducedMotion'
 
 /* ===========================================================================
@@ -390,7 +391,7 @@ export function StageCarousel({
                     colour (art bible 2.4). */}
                 {card.done && !card.locked && (
                   <span className="absolute top-3 right-3 flex items-center gap-1 rounded-pill bg-lime-soft px-2 py-0.5 text-sm font-bold text-indigo shadow-[0_2px_0_0_rgb(26_43_76/0.15)]">
-                    <span aria-hidden="true">★</span> Done
+                    <StarGlyph className="h-3.5 w-3.5 text-indigo" /> Done
                   </span>
                 )}
               </button>

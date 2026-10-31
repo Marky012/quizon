@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { play } from '@/lib/audio'
 import { useAppBack } from '@/lib/appBack'
+import { StarGlyph } from './LessonParts'
 
 /* ===========================================================================
    THE SCREEN FRAME (art bible 5.2).
@@ -172,9 +173,11 @@ export function StarRow({ count, total }: { count: number; total: number }) {
       aria-label={`${count} correct out of ${total}`}
     >
       {Array.from({ length: total }, (_, i) => (
-        <span key={i} aria-hidden="true" className="text-[18px] leading-none">
-          {i < count ? '★' : '☆'}
-        </span>
+        <StarGlyph
+          key={i}
+          filled={i < count}
+          className={`h-4 w-4 ${i < count ? 'text-yellow' : 'text-navy/35'}`}
+        />
       ))}
     </div>
   )

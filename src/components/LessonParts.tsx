@@ -225,3 +225,70 @@ export function TargetGlyph({ className }: G) {
     </svg>
   )
 }
+
+export function LockGlyph({ className }: G) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="5" y="11" width="14" height="10" rx="2.5" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+      <circle cx="12" cy="16" r="1.4" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+export function PawGlyph({ className }: G) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" className={className}>
+      <ellipse cx="12" cy="16" rx="5" ry="4" />
+      <ellipse cx="6.5" cy="10.5" rx="2" ry="2.6" transform="rotate(-18 6.5 10.5)" />
+      <ellipse cx="10" cy="7.5" rx="2" ry="2.7" />
+      <ellipse cx="14" cy="7.5" rx="2" ry="2.7" />
+      <ellipse cx="17.5" cy="10.5" rx="2" ry="2.6" transform="rotate(18 17.5 10.5)" />
+    </svg>
+  )
+}
+
+export function StarGlyph({ className, filled = true }: G & { filled?: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth={filled ? '1.5' : '2.2'}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M12 2.5l2.8 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.8 3.3 1.3-6.5-4.9-4.5 6.6-.8L12 2.5z" />
+    </svg>
+  )
+}
+
+export function VolumeOnGlyph({ className }: G) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M11 5L6 9H3v6h3l5 4V5z" fill="currentColor" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+      <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+    </svg>
+  )
+}
+
+export function VolumeOffGlyph({ className }: G) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M11 5L6 9H3v6h3l5 4V5z" fill="currentColor" />
+      <path d="M22 9l-6 6M16 9l6 6" />
+    </svg>
+  )
+}
+
+export function ClockGlyph({ className }: G) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  )
+}

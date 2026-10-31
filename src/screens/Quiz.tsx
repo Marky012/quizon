@@ -6,7 +6,7 @@ import { QuestionCard } from '@/components/QuestionCard'
 import { Sheet } from '@/components/Sheet'
 import { PupAvatar } from '@/components/PupAvatar'
 import { SkillSymbol } from '@/components/SkillSymbol'
-import { TeacherNote } from '@/components/LessonParts'
+import { TeacherNote, BookGlyph, BulbGlyph, LockGlyph, PawGlyph } from '@/components/LessonParts'
 import { QuizFallback } from '@/components/RouteFallback'
 import { SKILLS, SKILL_BY_ID } from '@/content/manifest'
 import { accentVar, accentSoftVar, accentInk } from '@/lib/accents'
@@ -298,8 +298,8 @@ export function Quiz() {
           <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-yellow via-turquoise to-violet" />
           <div className="mb-3 mt-1 flex items-center justify-between gap-2">
             <h2 className="flex items-center gap-2 font-display text-[21px] leading-6 text-indigo">
-              <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-yellow-soft text-[18px] shadow-sm">
-                📖
+              <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-yellow-soft text-indigo shadow-sm">
+                <BookGlyph className="h-5 w-5" />
               </span>
               {passage?.title ?? 'Story'}
             </h2>
@@ -362,9 +362,15 @@ export function Quiz() {
           >
             <span
               aria-hidden="true"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-cream/70 text-[20px] leading-none shadow-sm"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-cream/70 text-indigo shadow-sm"
             >
-              {hintSkillId ? '🐾' : hintUnlocked ? '💡' : '🔒'}
+              {hintSkillId ? (
+                <PawGlyph className="h-5 w-5" />
+              ) : hintUnlocked ? (
+                <BulbGlyph className="h-5 w-5" />
+              ) : (
+                <LockGlyph className="h-5 w-5" />
+              )}
             </span>
             <span>{hintUnlocked ? 'Call a helper' : hintSkillId ? 'View helper rule' : 'Hint'}</span>
           </button>
@@ -384,9 +390,9 @@ export function Quiz() {
           <div className="flex items-center gap-3.5 rounded-[20px] bg-yellow-soft/70 p-3.5 ring-2 ring-yellow">
             <span
               aria-hidden="true"
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-yellow text-[24px] shadow-sm"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-yellow text-indigo shadow-sm"
             >
-              🔒
+              <LockGlyph className="h-6 w-6" />
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-navy/70">
@@ -489,8 +495,9 @@ export function Quiz() {
               </div>
             </div>
 
-            <p className="rounded-[14px] bg-indigo-soft/45 px-3.5 py-2 text-center text-[13px] font-semibold text-navy/85">
-              💡 That is the rule, not the answer. Use it to solve the item!
+            <p className="flex items-center justify-center gap-1.5 rounded-[14px] bg-indigo-soft/45 px-3.5 py-2 text-center text-[13px] font-semibold text-navy/85">
+              <BulbGlyph className="h-4 w-4 shrink-0 text-indigo" />
+              <span>That is the rule, not the answer. Use it to solve the item!</span>
             </p>
 
             <button

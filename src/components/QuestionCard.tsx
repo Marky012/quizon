@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Question } from '@/content/schemas'
 import { OptionButton, type OptionState } from './OptionButton'
 import { play, buzz } from '@/lib/audio'
-import { TeacherNote } from './LessonParts'
+import { TeacherNote, CheckGlyph, BulbGlyph } from './LessonParts'
 
 /* ===========================================================================
    ONE QUESTION, PRESENTED AND MARKED.
@@ -281,9 +281,9 @@ export function QuestionCard({
                 <div className="mb-1 flex items-center gap-2">
                   <span
                     aria-hidden="true"
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-lime text-indigo text-[15px] font-black shadow-sm animate-badge-pop"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-lime text-indigo shadow-sm animate-badge-pop"
                   >
-                    ?
+                    <CheckGlyph className="h-4 w-4" />
                   </span>
                   <p className="font-display text-[19px] font-bold leading-6 text-indigo">
                     Correct! That is the right answer.
@@ -296,9 +296,9 @@ export function QuestionCard({
                 <div className="mb-1 flex items-center gap-2">
                   <span
                     aria-hidden="true"
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow text-indigo text-[14px] font-black shadow-sm animate-badge-wobble"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow text-indigo shadow-sm animate-badge-wobble"
                   >
-                    ??
+                    <BulbGlyph className="h-4 w-4" />
                   </span>
                   <p className="font-display text-[19px] font-bold leading-6 text-indigo">
                     Not quite. Let&apos;s look again.

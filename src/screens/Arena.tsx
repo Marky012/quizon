@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { ScreenFrame, useBack } from '@/components/ScreenFrame'
 import { PupAvatar } from '@/components/PupAvatar'
+import { StarGlyph } from '@/components/LessonParts'
 import { SettingsButton } from '@/components/SettingsButton'
 import { SKILLS } from '@/content/manifest'
 import { TIER_ORDER, WORLD, type TierId } from '@/content/world'
@@ -283,18 +284,22 @@ export function Arena() {
                         {tier.name}
                       </span>
                       {open && passed && (
-                        <span className="shrink-0 rounded-pill bg-yellow px-2 py-0.5 text-[11px] font-extrabold text-indigo">
-                          ★ {best}%
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-pill bg-yellow px-2 py-0.5 text-[11px] font-extrabold text-indigo">
+                          <StarGlyph className="h-3 w-3" /> {best}%
                         </span>
                       )}
                     </span>
                     <span className="flex items-center gap-2">
                       <span
                         aria-hidden="true"
-                        className={`text-[12px] leading-5 tracking-[0.18em] ${open ? 'text-yellow' : 'text-navy/40'}`}
+                        className={`inline-flex items-center gap-0.5 ${open ? 'text-yellow' : 'text-navy/40'}`}
                       >
-                        {'★'.repeat(index + 1)}
-                        <span className="opacity-30">{'★'.repeat(TIER_ORDER.length - index - 1)}</span>
+                        {Array.from({ length: TIER_ORDER.length }, (_, starIdx) => (
+                          <StarGlyph
+                            key={starIdx}
+                            className={`h-3 w-3 ${starIdx <= index ? '' : 'opacity-30'}`}
+                          />
+                        ))}
                       </span>
                       <span
                         className={`truncate text-[13px] leading-5 ${open ? 'text-cream/75' : 'text-navy/60'

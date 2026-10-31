@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { NetworkBadge } from '@/components/NetworkBadge'
 import { ScreenFrame, useBack } from '@/components/ScreenFrame'
 import { SyncBadge } from '@/components/SyncBadge'
+import { VolumeOnGlyph, VolumeOffGlyph } from '@/components/LessonParts'
 import { FEATURES, ROADMAP } from '@/constants/features'
 import { play } from '@/lib/audio'
 import { useReducedMotion } from '@/lib/useReducedMotion'
@@ -93,9 +94,9 @@ export function Settings() {
           >
             <span
               aria-hidden="true"
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-turquoise text-[22px] text-on-turquoise shadow-[inset_0_-5px_0_0_rgb(26_43_76/0.15)]"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-turquoise text-on-turquoise shadow-[inset_0_-5px_0_0_rgb(26_43_76/0.15)]"
             >
-              {soundEnabled ? '🔊' : '🔇'}
+              {soundEnabled ? <VolumeOnGlyph className="h-6 w-6" /> : <VolumeOffGlyph className="h-6 w-6" />}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block font-display text-[19px] leading-6 text-indigo">Sound</span>

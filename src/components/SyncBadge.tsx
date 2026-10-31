@@ -1,4 +1,6 @@
+import type { ReactNode } from 'react'
 import { useGameStore } from '@/store/gameStore'
+import { CheckGlyph, RetryGlyph, ClockGlyph } from './LessonParts'
 
 /* ===========================================================================
    THE SYNC BADGE.
@@ -41,25 +43,25 @@ export function SyncBadge({ className = '' }: { className?: string }) {
 
   if (!classCode) return null
 
-  let icon = '✓'
+  let icon: ReactNode = <CheckGlyph className="h-4 w-4" />
   let text: string
   switch (status) {
     case 'synced':
-      icon = '✓'
+      icon = <CheckGlyph className="h-4 w-4" />
       text = lastSyncedAt
         ? `Your teacher can see your progress. Last sent ${relativeTime(lastSyncedAt, Date.now())}.`
         : 'Your teacher can see your progress.'
       break
     case 'syncing':
-      icon = '↻'
+      icon = <RetryGlyph className="h-4 w-4" />
       text = 'Sending your record to your teacher.'
       break
     case 'offline':
-      icon = '⏳'
+      icon = <ClockGlyph className="h-4 w-4" />
       text = 'Your work is saved. It will go to your teacher when this device is online.'
       break
     case 'pending':
-      icon = '⏳'
+      icon = <ClockGlyph className="h-4 w-4" />
       text = 'Your work is saved and waiting to be sent.'
       break
     case 'error':
@@ -79,7 +81,7 @@ export function SyncBadge({ className = '' }: { className?: string }) {
       className={`flex items-start gap-2 text-left text-[14px] leading-5 text-navy/80 ${className}`}
       role="status"
     >
-      <span aria-hidden="true" className="font-bold text-turquoise">
+      <span aria-hidden="true" className="mt-0.5 flex shrink-0 items-center justify-center font-bold text-turquoise">
         {icon}
       </span>
       <span>{text}</span>

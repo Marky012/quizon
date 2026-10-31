@@ -4,6 +4,7 @@ import { ConfettiBurst } from '@/components/ConfettiBurst'
 import { InstallButton } from '@/components/InstallButton'
 import { ScreenFrame } from '@/components/ScreenFrame'
 import { PupAvatar } from '@/components/PupAvatar'
+import { CheckGlyph } from '@/components/LessonParts'
 import { SkillSymbol } from '@/components/SkillSymbol'
 import { StepIndicator } from '@/components/StepIndicator'
 import { ONBOARDING_TOTAL, STEP_HELPER } from '@/constants/onboarding'
@@ -400,9 +401,9 @@ export function Welcome() {
                     {active && (
                       <span
                         aria-hidden="true"
-                        className="absolute -top-2 right-1 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-yellow text-[14px] leading-none font-bold text-indigo"
+                        className="absolute -top-2 right-1 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-yellow text-indigo"
                       >
-                        ✓
+                        <CheckGlyph className="h-3.5 w-3.5" />
                       </span>
                     )}
                   </span>

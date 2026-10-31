@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ScreenFrame, useBack } from '@/components/ScreenFrame'
 import { QuestionCard } from '@/components/QuestionCard'
 import { PupAvatar } from '@/components/PupAvatar'
-import { TeacherNote } from '@/components/LessonParts'
+import { TeacherNote, StarGlyph } from '@/components/LessonParts'
 import { SKILL_BY_ID } from '@/content/manifest'
 import { SPECIES_NAME } from '@/content/schemas'
 import { getPreTest } from '@/content/questions'
@@ -148,7 +148,15 @@ export function PreTest() {
                       : 'bg-white/15 text-cream'
                 }`}
               >
-                {isPerfect ? '★ 5 / 5 Perfect Score ★' : `Score: ${finalScore} / ${total}`}
+                {isPerfect ? (
+                  <>
+                    <StarGlyph className="h-3.5 w-3.5" />
+                    <span>5 / 5 Perfect Score</span>
+                    <StarGlyph className="h-3.5 w-3.5" />
+                  </>
+                ) : (
+                  `Score: ${finalScore} / ${total}`
+                )}
               </span>
             </div>
 

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ScreenFrame, useBack } from '@/components/ScreenFrame'
 import { SkillSymbol } from '@/components/SkillSymbol'
 import { PupAvatar } from '@/components/PupAvatar'
-import { TeacherNote } from '@/components/LessonParts'
+import { TeacherNote, BookGlyph, CheckGlyph } from '@/components/LessonParts'
 import { SKILL_BY_ID } from '@/content/manifest'
 import { PASSAGE_BY_ID } from '@/content/texts'
 import { accentGlowVar, accentInk, accentVar } from '@/lib/accents'
@@ -95,7 +95,7 @@ export function SkillLesson() {
             }`}
           >
             <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white/20 text-[9px]">
-              {step > 0 ? '✓' : '1'}
+              {step > 0 ? <CheckGlyph className="h-2.5 w-2.5" /> : '1'}
             </span>
             The Rule
           </span>
@@ -177,8 +177,8 @@ export function SkillLesson() {
                 The Core Rule
               </span>
               {isEarned && (
-                <span className="rounded-full bg-lime/20 px-2 py-0.5 text-[10px] font-bold text-lime ring-1 ring-lime/40">
-                  Pup Earned ✓
+                <span className="inline-flex items-center gap-1 rounded-full bg-lime/20 px-2 py-0.5 text-[10px] font-bold text-lime ring-1 ring-lime/40">
+                  Pup Earned <CheckGlyph className="h-3 w-3" />
                 </span>
               )}
             </div>
@@ -206,8 +206,8 @@ export function SkillLesson() {
           <section className="card-cream animate-slide-up rounded-[22px] border-2 border-indigo/10 p-5 shadow-sm">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-navy/10 pb-3">
               <div className="flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-indigo text-cream text-[13px]">
-                  📖
+                <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-indigo text-cream">
+                  <BookGlyph className="h-4 w-4" />
                 </span>
                 <h2 className="font-display text-[19px] font-bold text-indigo">
                   Worked Example

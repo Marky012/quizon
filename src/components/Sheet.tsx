@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, type ReactNode } from 'react'
+import { CrossGlyph } from './LessonParts'
 
 /* ===========================================================================
    SHEET - the modal that rises from the bottom.
@@ -138,9 +139,7 @@ export function Sheet({
             aria-label={labelClose}
             className="btn-chunky flex h-10 w-10 shrink-0 items-center justify-center bg-indigo-soft text-indigo hover:bg-turquoise hover:text-on-turquoise"
           >
-            <span aria-hidden="true" className="text-[18px] font-bold leading-none">
-              ✕
-            </span>
+            <CrossGlyph className="h-5 w-5" />
           </button>
         </div>
         {children}
