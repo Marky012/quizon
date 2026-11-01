@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   __setInstallPromptForTests,
   installAvailable,
+  isStandalone,
   promptInstall,
   subscribeInstall,
 } from './install'
@@ -79,5 +80,16 @@ describe('the install offer', () => {
   it('reports unavailable rather than throwing when there is no offer', async () => {
     __setInstallPromptForTests(null)
     expect(await promptInstall()).toBe('unavailable')
+  })
+
+  it('recognises a Capacitor native APK shell as already standalone/installed', () => {
+    const win = window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }
+    const prev = win.Capacitor
+    try {
+      win.Capacitor = { isNativePlatform: () => true }
+      expect(isStandalone()).toBe(true)
+    } finally {
+      win.Capacitor = prev
+    }
   })
 })

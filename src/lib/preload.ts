@@ -1,6 +1,7 @@
 import { PUP_BY_ID } from '@/content/manifest'
 import { ALL_ROUTES } from '@/lazyRoutes'
 import { musicReady } from '@/lib/audio'
+import { isStandalone } from '@/lib/install'
 
 /* ===========================================================================
    THE WARM-UP - what the boot screen is actually doing while the bar fills.
@@ -47,19 +48,19 @@ import { musicReady } from '@/lib/audio'
 export const MIN_BOOT_MS = 700
 
 /** How long the fonts get before they are given up on. */
-const FONT_TIMEOUT_MS = 4000
+const FONT_TIMEOUT_MS = 1500
 
 /**
  * How long one file gets before it is given up on.
  *
  * Exists so a stalled request cannot hold the start button forever, not as a
- * shortcut: on a working connection a 4 MB track finishes well inside this.
+ * shortcut: on a working connection or local APK assets finish well inside this.
  * The boot gate waits for every task to settle, one way or the other.
  */
-const ASSET_TIMEOUT_MS = 20_000
+const ASSET_TIMEOUT_MS = 4000
 
-/** The service worker precaches ~20 MB on a first visit. */
-const SW_TIMEOUT_MS = 30_000
+/** The service worker precaches ~20 MB on a first web visit. */
+const SW_TIMEOUT_MS = 10_000
 
 /**
  * The art the app draws.
@@ -137,6 +138,7 @@ function loadImage(src: string): Promise<void> {
  */
 function fontsReady(): Promise<void> {
   if (typeof document === 'undefined' || !document.fonts) return Promise.resolve()
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return Promise.resolve()
   try {
     // Ask for the two families explicitly. The boot screen is the first thing
     // that renders, so the faces the app uses have to be requested before
@@ -155,19 +157,25 @@ function fontsReady(): Promise<void> {
 /**
  * The service worker.
  *
- * A boot task in production, and only in production. The app is offline-first
+ * A boot task in production on the web, and only there. The app is offline-first
  * and that promise is kept by the worker's precache, which is why the download
  * is not finished until the worker is ready.
  *
- * In development there is no worker registered at all, so
- * navigator.serviceWorker.ready NEVER settles. That is why warmUp adds this
- * task behind import.meta.env.PROD instead of always waiting on it.
+ * In development (or in an installed native APK where assets are already local)
+ * there is no worker to wait on, so this task is skipped rather than left to
+ * hang until timeout.
  */
 function serviceWorkerReady(): Promise<void> {
-  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator) || isStandalone()) {
     return Promise.resolve()
   }
-  return navigator.serviceWorker.ready.then(() => undefined, () => undefined)
+  return navigator.serviceWorker
+    .register('/sw.js', { scope: '/' })
+    .then(() => navigator.serviceWorker.ready)
+    .then(
+      () => undefined,
+      () => undefined,
+    )
 }
 
 /** How far along the warm-up is. */
@@ -244,9 +252,12 @@ export function warmUp(): Promise<void> {
     settle(fontsReady(), FONT_TIMEOUT_MS),
     settle(musicReady(), ASSET_TIMEOUT_MS),
   ]
-  // The worker is where the offline copy lives. In dev there is none to wait
-  // for, so the task is skipped rather than left to hang.
-  if (import.meta.env.PROD) tasks.push(settle(serviceWorkerReady(), SW_TIMEOUT_MS))
+  // The worker is where the offline copy lives on the web. In dev or in an
+  // already-installed standalone/native APK there is none to wait for, so the
+  // task is skipped rather than left to hang.
+  if (import.meta.env.PROD && !isStandalone()) {
+    tasks.push(settle(serviceWorkerReady(), SW_TIMEOUT_MS))
+  }
   return runTasks(tasks, report)
 }
 

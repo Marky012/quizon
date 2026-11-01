@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ProgressBar } from '@/components/ScreenFrame'
 import { LoadingNote } from '@/components/Skeleton'
@@ -85,6 +85,7 @@ export function Boot() {
   const [phase, setPhase] = useState<Phase>(firstVisit ? 'download' : 'loading')
   const [pct, setPct] = useState(0)
   const [tip, setTip] = useState(0)
+  const wantsInstall = useRef(false)
 
   /** Where the start button goes. Same spine decision Boot has always made. */
   const destination = !hasStarted
@@ -127,7 +128,12 @@ export function Boot() {
     setPhase('loading')
     // The prompt must be called from this tap. It is fired alongside the
     // warm-up, not awaited: a dismissed prompt must not stop the download.
-    if (install && installAvailable()) void promptInstall()
+    // If the browser's beforeinstallprompt event arrives while the bar is
+    // filling, remember the learner's choice and fire it on the Start tap.
+    if (install) {
+      if (installAvailable()) void promptInstall()
+      else wantsInstall.current = true
+    }
     void startWarmup().then(() => {
       setPct(100)
       setPhase('start')
@@ -137,6 +143,10 @@ export function Boot() {
   function enterGame() {
     play('tap')
     markBootSeen()
+    if (wantsInstall.current && installAvailable()) {
+      wantsInstall.current = false
+      void promptInstall()
+    }
     navigate(destination, { replace: true })
   }
 

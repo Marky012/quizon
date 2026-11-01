@@ -14,6 +14,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeManifestIcons: false,
       // NO includeAssets. IT USED TO BE HERE AND IT BROKE THE OFFLINE BUILD
       // SILENTLY, and that is worth writing down.
       //

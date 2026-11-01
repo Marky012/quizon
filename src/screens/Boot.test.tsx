@@ -241,6 +241,30 @@ describe('a first launch', () => {
 
     expect(prompt).toHaveBeenCalledTimes(1)
   })
+
+  it('calls the browser install prompt on Start playing if the offer arrived during warm-up', async () => {
+    const prompt = vi.fn(async () => {})
+
+    renderAt('/')
+    await settle()
+    await tap('Download and play offline')
+    await settle()
+    expect(prompt).toHaveBeenCalledTimes(0)
+
+    __setInstallPromptForTests({
+      prompt,
+      userChoice: Promise.resolve({ outcome: 'accepted', platform: 'web' }),
+    } as never)
+
+    await act(async () => {
+      warm.finish()
+    })
+    await settle()
+    await tap('Start playing')
+    await settle()
+
+    expect(prompt).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('a returning launch', () => {

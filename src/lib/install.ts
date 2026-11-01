@@ -31,6 +31,8 @@
    download offer, and clearing game progress must not replay the download.
    =========================================================================== */
 
+import { Capacitor } from '@capacitor/core'
+
 /**
  * The shape of the event Chrome fires. It is not in the DOM lib yet, so it is
  * declared here rather than pulled from a types package.
@@ -59,7 +61,11 @@ let capturing = false
 export function captureInstallPrompt(): void {
   if (capturing) return
   capturing = true
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined' || isStandalone()) return
+
+  if (import.meta.env.PROD && typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+    void navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {})
+  }
 
   window.addEventListener('beforeinstallprompt', (event) => {
     // preventDefault() is the whole point: without it the browser shows its
@@ -107,8 +113,12 @@ export function installAvailable(): boolean {
 export function isStandalone(): boolean {
   if (typeof window === 'undefined') return false
   try {
+    const winCap = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor
     return (
-      window.matchMedia('(display-mode: standalone)').matches ||
+      Capacitor.isNativePlatform() ||
+      winCap?.isNativePlatform?.() === true ||
+      window.matchMedia?.('(display-mode: standalone)')?.matches === true ||
+      window.matchMedia?.('(display-mode: fullscreen)')?.matches === true ||
       (navigator as Navigator & { standalone?: boolean }).standalone === true
     )
   } catch {

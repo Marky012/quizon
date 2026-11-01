@@ -56,6 +56,7 @@ function musicElement(): HTMLAudioElement | null {
       music.loop = true
       music.preload = 'auto'
       music.volume = MUSIC_VOLUME
+      music.load()
     } catch {
       return null
     }
@@ -75,24 +76,23 @@ export function preloadMusic(): void {
 
 let musicReadyPromise: Promise<void> | null = null
 
-/** Resolves once the track can play. Never rejects: a missing file is silence. */
+/** Resolves once the track can play (or WebView suspends preloading until gesture). Never rejects: a missing file is silence. */
 export function musicReady(): Promise<void> {
   const el = musicElement()
   if (!el) return Promise.resolve()
-  if (el.readyState >= 2) return Promise.resolve()
+  if (el.readyState >= 1) return Promise.resolve()
   if (musicReadyPromise) return musicReadyPromise
   musicReadyPromise = new Promise<void>((resolve) => {
     let settled = false
+    const events = ['loadedmetadata', 'loadeddata', 'canplay', 'suspend', 'error'] as const
     const done = () => {
       if (settled) return
       settled = true
-      el.removeEventListener('loadeddata', done)
-      el.removeEventListener('error', done)
+      for (const ev of events) el.removeEventListener(ev, done)
       resolve()
     }
-    el.addEventListener('loadeddata', done)
-    el.addEventListener('error', done)
-    if (el.readyState >= 2) done()
+    for (const ev of events) el.addEventListener(ev, done)
+    if (el.readyState >= 1) done()
   })
   return musicReadyPromise
 }
