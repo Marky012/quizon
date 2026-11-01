@@ -62,6 +62,10 @@ export interface CarouselCard {
    * static "earn all eight" into a countdown the child can watch close.
    */
   progress?: CarouselProgress
+  /** A CSS colour (token var) that tints the card's glow, plate and badge. */
+  accent?: string
+  /** Short call-to-action shown on the card's footer pill. */
+  cta?: string
 }
 
 export function StageCarousel({
@@ -209,7 +213,7 @@ export function StageCarousel({
            header and the grass was taller than the glass, so the grass and the
            pups' names fell below the fold. The vh-based clamp only applies from
            lg, so the phone keeps its exact 380px card. */
-        className="relative -mx-4 flex snap-x snap-mandatory items-center gap-3 overflow-x-auto px-4 pb-1 [--card-h:380px] [scrollbar-width:none] lg:snap-none lg:justify-center lg:overflow-visible lg:[--card-h:clamp(260px,34vh,380px)] [&::-webkit-scrollbar]:hidden"
+        className="relative -mx-4 flex snap-x snap-mandatory items-center gap-3 overflow-x-auto px-4 pb-1 [--card-h:380px] [scrollbar-width:none] lg:snap-none lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:[--card-h:clamp(220px,34vh,380px)] [&::-webkit-scrollbar]:hidden"
       >
         {/* Half-a-viewport spacers at both ends, and they are load-bearing.
 
@@ -282,8 +286,16 @@ export function StageCarousel({
                   The BUTTON NO LONGER HAS A VISIBLE NAME, so it needs
                   aria-label. Without it the control announces only "button" to a
                   screen reader, which on a three-card carousel is useless. */}
-              <span className="mb-1.5 block text-center font-display text-[17px] leading-5 text-indigo">
-                {card.label}
+              <span className="mb-2 flex items-center justify-center gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo font-display text-[13px] leading-none text-cream shadow-[0_2px_0_0_rgb(26_43_76/0.3)]"
+                >
+                  {i + 1}
+                </span>
+                <span className="rounded-pill bg-cream/90 px-3 py-0.5 font-display text-[17px] leading-6 text-indigo shadow-[0_2px_0_0_rgb(26_43_76/0.18)]">
+                  {card.label}
+                </span>
               </span>
 
               <button
@@ -302,12 +314,15 @@ export function StageCarousel({
                    the transform back, so hover lift still works afterwards.
                    Reduced motion gets no animation and no delay at all. */
                 style={
-                  reduced
-                    ? undefined
-                    : {
-                        animation: 'var(--animate-card-in)',
-                        animationDelay: `${i * 90}ms`,
-                      }
+                  {
+                    '--stage-accent': card.accent ?? 'var(--color-turquoise)',
+                    ...(reduced
+                      ? {}
+                      : {
+                          animation: 'var(--animate-card-in)',
+                          animationDelay: `${i * 90}ms`,
+                        }),
+                  } as CSSProperties
                 }
                 /* TALLER AND MORE PORTRAIT, and the height is a min-height rather than a
                    natural one on purpose.
@@ -338,9 +353,16 @@ export function StageCarousel({
                     the door is shut, so showing the room behind it would be a
                     lie. The lock is a drawn SVG, not the ðŸ”’ character, for the
                     same optical-centring reason as the header gear. */}
+                {!card.locked && (
+                  <>
+                    <span aria-hidden="true" className="stage-sparkle left-5 top-14" />
+                    <span aria-hidden="true" className="stage-sparkle right-6 top-24 !h-2 !w-2" style={{ animationDelay: '600ms' }} />
+                    <span aria-hidden="true" className="stage-sparkle bottom-28 left-7 !h-2 !w-2" style={{ animationDelay: '1200ms' }} />
+                  </>
+                )}
                 <span className={`flex min-h-0 flex-1 items-center justify-center`}>
                   <span
-                    className={`flex h-36 w-36 items-center justify-center rounded-[24px] ${
+                    className={`flex h-36 w-36 items-center justify-center rounded-[24px] [@media(max-height:700px)]:h-24 [@media(max-height:700px)]:w-24 ${
                       card.locked ? 'stage-icon-locked' : 'stage-icon'
                     } ${isActive && !card.locked && !reduced ? 'animate-float' : ''}`}
                   >
@@ -379,6 +401,24 @@ export function StageCarousel({
                       }`}
                     >
                       {statusText}
+                    </span>
+                  </span>
+                )}
+
+                {/* CTA pill: tells a child the whole card is a button. */}
+                {!card.locked && (
+                  <span
+                    aria-hidden="true"
+                    className="mt-1 inline-flex items-center gap-1.5 rounded-pill bg-cream py-1.5 pl-4 pr-2.5 font-display text-[15px] leading-5 text-indigo shadow-[0_3px_0_0_rgb(0_0_0/0.22)]"
+                  >
+                    {card.cta ?? 'Open'}
+                    <span
+                      className="flex h-6 w-6 items-center justify-center rounded-full text-indigo"
+                      style={{ background: 'var(--stage-accent)' }}
+                    >
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 5l7 7-7 7" />
+                      </svg>
                     </span>
                   </span>
                 )}

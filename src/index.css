@@ -907,14 +907,50 @@
      deep and soft - a hard edge is exactly the comic outline the 2026-10-06
      reset removed. */
   .stage-card {
+    --stage-accent: var(--color-turquoise);
+    position: relative;
     background:
-      radial-gradient(circle at 18% 8%, rgb(0 210 196 / 0.3), transparent 44%),
-      radial-gradient(circle at 88% 102%, rgb(123 97 255 / 0.4), transparent 50%),
-      linear-gradient(180deg, #2a3688 0%, var(--color-indigo) 58%);
+      radial-gradient(60% 42% at 50% 36%, color-mix(in srgb, var(--stage-accent) 38%, transparent), transparent 72%),
+      radial-gradient(circle at 14% 4%, color-mix(in srgb, var(--stage-accent) 45%, transparent), transparent 46%),
+      radial-gradient(circle at 92% 104%, rgb(123 97 255 / 0.45), transparent 52%),
+      linear-gradient(170deg, #2f3c96 0%, var(--color-indigo) 55%, #141b66 100%);
     box-shadow:
-      inset 0 1px 0 0 rgb(255 255 255 / 0.22),
-      inset 0 -12px 24px -14px rgb(0 0 0 / 0.45),
-      0 22px 34px -20px rgb(26 35 126 / 0.7);
+      inset 0 1px 0 0 rgb(255 255 255 / 0.28),
+      inset 0 -14px 26px -14px rgb(0 0 0 / 0.5),
+      0 2px 4px -1px rgb(26 35 126 / 0.2),
+      0 24px 36px -20px rgb(26 35 126 / 0.75);
+    transition: box-shadow 220ms ease, transform 200ms ease;
+  }
+
+  /* Lit hairline in the stage's own colour, fading out by mid-card (same
+     trick as .school-card) so each place owns a colour without a heavy border. */
+  .stage-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1.5px;
+    border-radius: inherit;
+    background: linear-gradient(145deg,
+        color-mix(in srgb, var(--stage-accent) 90%, transparent) 0%,
+        color-mix(in srgb, var(--stage-accent) 25%, transparent) 35%,
+        rgb(255 255 255 / 0.06) 65%,
+        rgb(255 255 255 / 0.04) 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    pointer-events: none;
+  }
+
+  /* Tiny twinkles scattered on the card face. Pure decoration. */
+  .stage-sparkle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: var(--stage-accent);
+    clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+    opacity: 0.85;
+    animation: pulse-badge 2400ms ease-in-out infinite;
+    pointer-events: none;
   }
 
   /* Locked sibling. Desaturated exactly as art bible 7.1 requires, plus a faint
@@ -933,11 +969,17 @@
      inset bottom shade, so the glyph sits IN a physical tile rather than on a
      flat swatch. */
   .stage-icon {
-    background: linear-gradient(180deg, #3fe3d6 0%, var(--color-turquoise) 55%, #00b3a6 100%);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--stage-accent, var(--color-turquoise)) 65%, white) 0%,
+      var(--stage-accent, var(--color-turquoise)) 55%,
+      color-mix(in srgb, var(--stage-accent, var(--color-turquoise)) 80%, black) 100%
+    );
     box-shadow:
       inset 0 3px 0 0 rgb(255 255 255 / 0.5),
       inset 0 -10px 0 0 rgb(26 43 76 / 0.14),
-      0 12px 20px -12px rgb(26 35 126 / 0.6);
+      0 0 0 5px color-mix(in srgb, var(--stage-accent, var(--color-turquoise)) 28%, transparent),
+      0 14px 22px -12px rgb(8 12 52 / 0.7);
   }
 
   /* Locked plate: cream, drained of the turquoise, so the padlock is the only

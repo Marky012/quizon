@@ -5,6 +5,7 @@ import { PupBench } from '@/components/PupBench'
 import { SettingsButton } from '@/components/SettingsButton'
 import { StageArt } from '@/components/StageArt'
 import { StageCarousel, type CarouselCard } from '@/components/StageCarousel'
+import { PawGlyph, StarGlyph } from '@/components/LessonParts'
 import { SKILLS } from '@/content/manifest'
 import { TIER_ORDER, WORLD } from '@/content/world'
 import { play, buzz } from '@/lib/audio'
@@ -46,6 +47,8 @@ export function Hub() {
     (s) => Object.values(s.tiers).filter((t) => t && t.bestScore >= 70).length,
   )
   const totals = useGameStore((s) => s.totals)
+  const nickname = useGameStore((s) => s.playerNickname)
+  const pupsEarned = useGameStore((s) => s.skills.filter((k) => k.pupEarned).length)
   const answered = totals.correct + totals.incorrect
   const lastEarnedPupId = useGameStore((s) => s.lastEarnedSkillId)
   const consumePupCelebration = useGameStore((s) => s.consumePupCelebration)
@@ -96,6 +99,8 @@ export function Hub() {
       art: <StageArt stage="training" image="/assets/hub/woof-school.png" />,
       description: WORLD.stages.training.description,
       locked: false,
+      accent: 'var(--color-turquoise)',
+      cta: 'Start learning',
       done: lessonsDone === SKILLS.length,
       progress: {
         value: lessonsDone,
@@ -109,6 +114,8 @@ export function Hub() {
       art: <StageArt stage="arena" image="/assets/hub/reading-trail.png" />,
       description: WORLD.stages.arena.description,
       locked: false,
+      accent: 'var(--color-violet)',
+      cta: 'Take the trail',
       done: passedCount >= TIER_ORDER.length,
       progress: { value: passedCount, total: TIER_ORDER.length, label: 'levels passed' },
     },
@@ -118,6 +125,8 @@ export function Hub() {
       art: <StageArt stage="chronicle" image="/assets/hub/your-record.png" />,
       description: WORLD.stages.chronicle.description,
       locked: false,
+      accent: 'var(--color-yellow)',
+      cta: 'See my record',
       done: false,
       progress:
         answered > 0
@@ -163,22 +172,28 @@ export function Hub() {
            lighter than expected. The shadow is what makes white safe here. */}
       <header
         className="sticky top-0 z-30 px-4"
-        style={{ paddingTop: 'max(26px, env(safe-area-inset-top))', paddingBottom: 12 }}
+        style={{ paddingTop: 'max(clamp(10px,3vh,26px), env(safe-area-inset-top))', paddingBottom: 'clamp(4px,1.5vh,12px)' }}
       >
         <div className="mx-auto grid w-full max-w-4xl grid-cols-[48px_1fr_48px] items-center gap-2 sm:grid-cols-[72px_1fr_72px]">
-          <img
-            src="/assets/brand/quizon-logo.png"
-            alt=""
-            width={72}
-            height={72}
-            aria-hidden="true"
-            className="h-12 w-12 shrink-0 drop-shadow-[0_3px_0_rgba(26,43,76,0.35)] sm:h-[72px] sm:w-[72px]"
-          />
+          <div className="relative flex items-center justify-center">
+            <span
+              aria-hidden="true"
+              className="absolute h-14 w-14 rounded-full bg-yellow/30 blur-xl sm:h-20 sm:w-20"
+            />
+            <img
+              src="/assets/brand/quizon-logo.png"
+              alt=""
+              width={72}
+              height={72}
+              aria-hidden="true"
+              className="relative h-12 w-12 shrink-0 drop-shadow-[0_3px_0_rgba(26,43,76,0.35)] sm:h-[72px] sm:w-[72px]"
+            />
+          </div>
 
           {/* Scaled responsibly: compact text-[26px] on mobile to preserve breathing room,
               and full text-[56px] on larger screens. */}
           <p
-            className="min-w-0 truncate text-center font-display text-[26px] leading-none tracking-tight sm:text-[56px]"
+            className="min-w-0 truncate text-center font-display text-[26px] leading-none tracking-tight sm:text-[56px] [@media(max-height:700px)]:sm:text-[40px]"
             style={{
               textShadow:
                 '0 2px 0 var(--color-navy), 0 0 10px rgba(26,43,76,0.55)',
@@ -203,7 +218,39 @@ export function Hub() {
            (or with large system text) the first thing in main would have been
            unreachable above the scroll origin. Letting main scroll keeps every
            part of it reachable in that case. */}
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center overflow-y-auto px-4 py-3">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 overflow-y-auto px-4 py-3 lg:px-8 [&>*:first-child]:mt-auto [&>*:last-child]:mb-auto [@media(max-height:700px)]:gap-2 [@media(max-height:700px)]:py-1">
+        {/* WELCOME STRIP. A glass band that greets the learner by nickname and
+            shows three at-a-glance stats, so the Hub answers "who am I and how am
+            I doing" before a card is even opened. Static and decorative: every
+            number is also on the cards or in Your Record. */}
+        <section
+          aria-label="Your progress at a glance"
+          className="mx-auto flex w-full max-w-[560px] shrink-0 items-center gap-3 [@media(max-height:620px)]:hidden rounded-[22px] bg-indigo/80 px-3.5 py-2.5 text-cream shadow-[inset_0_1px_0_0_rgb(255_255_255/0.2),0_14px_26px_-16px_rgb(8_12_52/0.7)] ring-1 ring-white/15 backdrop-blur-md"
+        >
+          <span
+            aria-hidden="true"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-yellow text-indigo shadow-[inset_0_-4px_0_0_rgb(26_43_76/0.15)]"
+          >
+            <PawGlyph className="h-6 w-6" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-display text-[19px] leading-6 text-white">
+              Hi, <span className="text-yellow">{nickname || 'Reader'}</span>!
+            </p>
+            <p className="truncate text-[13px] leading-4 text-cream/80">Ready for a reading adventure?</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <span className="flex items-center gap-1 rounded-pill bg-white/12 px-2.5 py-1 text-[13px] font-extrabold ring-1 ring-inset ring-white/15">
+              <PawGlyph className="h-3.5 w-3.5 text-turquoise" />
+              {pupsEarned}/{SKILLS.length}
+            </span>
+            <span className="flex items-center gap-1 rounded-pill bg-white/12 px-2.5 py-1 text-[13px] font-extrabold ring-1 ring-inset ring-white/15">
+              <StarGlyph className="h-3.5 w-3.5 text-yellow" />
+              {passedCount}/{TIER_ORDER.length}
+            </span>
+          </div>
+        </section>
+
         {/* The learner code line that used to sit here was removed 2026-10-05.
             It was the only thing between the header and the carousel, and the
             carousel is vertically centred in this space - so one line of "Your

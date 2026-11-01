@@ -97,14 +97,14 @@ export function Record() {
         </div>
       }
     >
-      <div className="mb-4 flex flex-col gap-2">
+      <div className="mx-auto mb-4 flex w-full max-w-3xl flex-col gap-2 rounded-[18px] bg-cream/90 p-3">
         <p className="flex-1 text-[15px] leading-6 text-navy/80">
           This is your reading record. Your teacher will see it once it is synced.
         </p>
         <SyncBadge />
       </div>
 
-      <ul className="mb-5 grid grid-cols-3 gap-2.5">
+      <ul className="mx-auto mb-5 grid w-full max-w-3xl grid-cols-3 gap-2.5 sm:gap-4">
         {tiles.map((t) => (
           <li key={t.label} className={`card-cream ${t.tone} px-2 py-3 text-center`}>
             <p className="font-display text-[26px] leading-7 text-indigo tabular-nums">{t.value}</p>
@@ -113,26 +113,28 @@ export function Record() {
         ))}
       </ul>
 
-      <table className="w-full border-collapse text-left">
+      <section className="mx-auto w-full max-w-3xl rounded-[24px] bg-cream p-3 shadow-[0_14px_28px_-18px_rgb(8_12_52/0.7)] ring-1 ring-navy/10 sm:p-5">
+<div className="overflow-x-auto">
+<table className="w-full min-w-[420px] border-collapse text-left">
         <caption className="sr-only">
           Reading record: one row per reading skill, showing whether the helper is earned, how
           often it was called, and how many items need review.
         </caption>
         <thead>
           <tr className="border-b-2 border-navy/20">
-            <th scope="col" className="py-2 text-sm uppercase tracking-wide text-navy">
+            <th scope="col" className="px-1 py-2 text-[11px] font-extrabold uppercase tracking-wide text-navy/80 sm:text-xs">
               Skill
             </th>
-            <th scope="col" className="py-2 text-sm uppercase tracking-wide text-navy">
+            <th scope="col" className="px-1 py-2 text-[11px] font-extrabold uppercase tracking-wide text-navy/80 sm:text-xs">
               Helper
             </th>
-            <th scope="col" className="py-2 text-right text-sm uppercase tracking-wide text-navy">
+            <th scope="col" className="px-1 py-2 text-right text-[11px] font-extrabold uppercase leading-3 tracking-wide text-navy/80 sm:px-2 sm:text-xs">
               Skill check
             </th>
-            <th scope="col" className="py-2 text-right text-sm uppercase tracking-wide text-navy">
+            <th scope="col" className="px-1 py-2 text-right text-[11px] font-extrabold uppercase leading-3 tracking-wide text-navy/80 sm:px-2 sm:text-xs">
               Called
             </th>
-            <th scope="col" className="py-2 text-right text-sm uppercase tracking-wide text-navy">
+            <th scope="col" className="px-1 py-2 text-right text-[11px] font-extrabold uppercase leading-3 tracking-wide text-navy/80 sm:px-2 sm:text-xs">
               Review
             </th>
           </tr>
@@ -140,7 +142,7 @@ export function Record() {
         <tbody>
           {rows.map(({ skill, uses, preTest, review }) => (
             <tr key={skill.id} className="border-b-2 border-navy/15 align-middle">
-              <th scope="row" className="py-2 pr-2 font-bold text-indigo">
+              <th scope="row" className="py-2 pr-2 text-[15px] font-bold text-indigo sm:text-base">
                 <span className="flex items-center gap-2">
                   <SkillSymbol id={skill.symbol} size={18} />
                   {skill.name}
@@ -152,12 +154,12 @@ export function Record() {
                     reads in the Skill check column, not as chrome on the dog. */}
                 <PupAvatar pup={skill.pup} size={40} plain />
               </td>
-              <td className="py-2 text-right tabular-nums text-indigo">
+              <td className="px-1 py-2 text-right tabular-nums text-indigo sm:px-2 sm:text-base">
                 {preTest === null ? '—' : `${Math.round(preTest)}%`}
               </td>
-              <td className="py-2 text-right tabular-nums text-indigo">{uses}</td>
+              <td className="px-1 py-2 text-right tabular-nums text-indigo sm:px-2 sm:text-base">{uses}</td>
               <td
-                className={`py-2 text-right font-bold tabular-nums ${
+                className={`px-1 py-2 text-right font-bold tabular-nums sm:px-2 ${
                   review > 0 ? 'text-coral' : 'text-indigo'
                 }`}
               >
@@ -167,8 +169,11 @@ export function Record() {
           ))}
         </tbody>
       </table>
+</div>
+</section>
 
-      <h2 className="mt-6 mb-2 text-[20px] text-indigo">Levels</h2>
+      <section className="mx-auto mt-5 w-full max-w-3xl rounded-[24px] bg-cream p-4 shadow-[0_14px_28px_-18px_rgb(8_12_52/0.7)] ring-1 ring-navy/10 sm:p-5">
+<h2 className="mb-2 text-[20px] text-indigo">Levels</h2>
       <ul className="flex flex-col gap-1">
         {TIER_ORDER.map((id) => {
           const state = tiers[id]
@@ -185,14 +190,15 @@ export function Record() {
               <span className="text-right tabular-nums text-indigo">
                 {state.attempts.length === 0
                   ? 'Not attempted'
-                  : `${best}% &middot; ${state.attempts.length} of 3 used${passed ? '' : `, ${left} left`}`}
+                  : `${best}% · ${state.attempts.length} of 3 used${passed ? '' : `, ${left} left`}`}
               </span>
             </li>
           )
         })}
       </ul>
+      </section>
 
-      <p className="mt-4 text-[15px] leading-6 text-navy/80">
+      <p className="mx-auto mt-4 w-full max-w-3xl rounded-[18px] bg-cream/90 px-4 py-3 text-[15px] leading-6 text-navy/80">
         {totalReview === 0
           ? 'Nothing needs reviewing yet.'
           : `${totalReview} item${totalReview === 1 ? '' : 's'} across all levels would benefit from another look.`}
@@ -201,7 +207,7 @@ export function Record() {
       <button
         type="button"
         onClick={() => navigate('/hub')}
-        className="btn-chunky mt-4 w-full bg-turquoise py-4 text-on-turquoise"
+        className="btn-chunky mx-auto mt-4 block w-full max-w-3xl bg-turquoise py-4 text-on-turquoise"
       >
         See my pups
       </button>
