@@ -24,6 +24,7 @@ import {
   ArenaRoute,
   HubRoute,
   IntroRoute,
+  lazyRoute,
   PreTestRoute,
   ProfileRoute,
   QuizRoute,
@@ -389,5 +390,18 @@ describe('route table wiring', () => {
     expect(ResultRoute.fallback).toBe(ResultFallback)
     expect(RecordRoute.fallback).toBe(RecordFallback)
     expect(SettingsRoute.fallback).toBe(SettingsFallback)
+  })
+
+  it('renders a prefetched route synchronously without flashing its skeleton fallback', async () => {
+    const RealScreen = () => <h1>Real screen ready</h1>
+    const FallbackScreen = () => <h1>Skeleton fallback</h1>
+    const route = lazyRoute(async () => ({ default: RealScreen }), FallbackScreen)
+
+    await route.prefetch()
+
+    const { Suspense } = await import('react')
+    const Comp = route.component
+    mount('/', '/', <Suspense fallback={<route.fallback />}><Comp /></Suspense>)
+    expect(heading()).toBe('Real screen ready')
   })
 })

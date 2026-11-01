@@ -1,4 +1,4 @@
-import { lazy, type ComponentType } from 'react'
+import { createElement, lazy, type ComponentType } from 'react'
 import {
   ArenaFallback,
   HubFallback,
@@ -64,20 +64,39 @@ export function lazyRoute(
   load: () => Promise<{ default: ComponentType }>,
   fallback: ComponentType,
 ): LazyRoute {
-  const Component = lazy(load)
+  let resolved: ComponentType | null = null
+  let pending: Promise<{ default: ComponentType }> | null = null
+
+  const loadOnce = (): Promise<{ default: ComponentType }> => {
+    if (!pending) {
+      pending = load().then((mod) => {
+        resolved = mod.default
+        return mod
+      })
+    }
+    return pending
+  }
+
+  const LazyComponent = lazy(loadOnce)
+
+  function Component() {
+    if (resolved) return createElement(resolved)
+    return createElement(LazyComponent)
+  }
+
   return {
     component: Component,
-    // Calls the loader directly rather than reaching for any `.preload` API.
-    // The bundler's module registry dedupes concurrent calls, so a prefetch
-    // that lands before navigation is simply reused by React.lazy, and one
-    // that is still in flight is awaited rather than restarted.
-    prefetch: () => load().then(
-      () => undefined,
-      // A failed prefetch is not an error worth surfacing: the real navigation
-      // will hit the same failure and be handled by the error boundary with a
-      // message a learner can act on.
-      () => undefined,
-    ),
+    // Caches the resolved component directly so a prefetch that lands before
+    // navigation renders synchronously on the first frame without triggering
+    // React.lazy's initial Suspense fallback (skeleton flash).
+    prefetch: () =>
+      loadOnce().then(
+        () => undefined,
+        // A failed prefetch is not an error worth surfacing: the real navigation
+        // will hit the same failure and be handled by the error boundary with a
+        // message a learner can act on.
+        () => undefined,
+      ),
     fallback,
   }
 }
