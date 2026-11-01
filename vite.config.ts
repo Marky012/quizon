@@ -52,6 +52,7 @@ export default defineConfig({
         lang: 'en',
         theme_color: '#1A237E',
         background_color: '#FFFDF4',
+        id: '/',
         display: 'standalone',
         orientation: 'portrait',
         categories: ['education', 'games', 'kids'],

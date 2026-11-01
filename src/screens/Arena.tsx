@@ -5,6 +5,7 @@ import { ScreenFrame, useBack } from '@/components/ScreenFrame'
 import { PupAvatar } from '@/components/PupAvatar'
 import { StarGlyph } from '@/components/LessonParts'
 import { SettingsButton } from '@/components/SettingsButton'
+import { Sheet } from '@/components/Sheet'
 import { SKILLS } from '@/content/manifest'
 import { TIER_ORDER, WORLD, type TierId } from '@/content/world'
 import { MAX_ATTEMPTS, PASSING_SCORE, TIERS } from '@/constants/gameConfig'
@@ -78,6 +79,8 @@ export function Arena() {
     if (!a) return false
     return (s.tiers[a.tierId]?.attempts.length ?? 0) >= 3
   })
+
+  const [confirmRestart, setConfirmRestart] = useState(false)
 
   const resumeTier = resume ? WORLD.tiers[resume.tierId] : null
   const resumeTotal = resume ? resume.questionIds.length : 0
@@ -204,7 +207,7 @@ export function Arena() {
                 type="button"
                 onClick={() => {
                   play('tap')
-                  clearAttempt(resume.tierId)
+                  setConfirmRestart(true)
                 }}
                 className="btn-chunky bg-cream py-3 text-[15px] text-indigo"
               >
@@ -214,6 +217,38 @@ export function Arena() {
           )}
         </section>
       )}
+
+      <Sheet
+        open={confirmRestart && resume !== null}
+        onClose={() => setConfirmRestart(false)}
+        title="Start this level over?"
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-[15px] leading-6 text-navy/80">
+            Your saved answers for {resumeTier?.name ?? 'this level'} will be deleted and the level
+            starts from the first question. This cannot be undone.
+          </p>
+          <button
+            type="button"
+            onClick={() => setConfirmRestart(false)}
+            className="btn-chunky bg-turquoise py-3.5 text-on-turquoise"
+          >
+            Keep my answers
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!resume) return
+              play('tap')
+              clearAttempt(resume.tierId)
+              setConfirmRestart(false)
+            }}
+            className="btn-chunky bg-coral py-3 text-indigo"
+          >
+            Yes, start over
+          </button>
+        </div>
+      </Sheet>
 
       <ul className="flex flex-col gap-3.5">
         {TIER_ORDER.map((id: TierId, index) => {
