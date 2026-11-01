@@ -256,7 +256,7 @@ export function Profile() {
                 className="h-[72px] w-[72px] shrink-0"
               />
               <p className="text-[15px] leading-5 text-indigo">
-                You are the <span className="font-extrabold">{chosen.label}</span>.
+                Your character is a <span className="font-extrabold">{chosen.label.toLowerCase()}</span>!
               </p>
             </div>
           )}
