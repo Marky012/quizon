@@ -7,6 +7,7 @@ import {
   DEV_GROUPS,
   DEV_PRESETS,
   DEV_SCREEN_COUNT,
+  DEV_SEED_KEY,
   type DevPreset,
 } from './bypass'
 
@@ -30,7 +31,13 @@ import {
 export function DevIndex() {
   const navigate = useNavigate()
   const [busy, setBusy] = useState<string | null>(null)
-  const [applied, setApplied] = useState<string | null>(null)
+  const [applied, setApplied] = useState<string | null>(() => {
+    try {
+      return window.localStorage.getItem(DEV_SEED_KEY)
+    } catch {
+      return null
+    }
+  })
 
   async function run(preset: DevPreset) {
     setBusy(preset.id)
@@ -117,6 +124,7 @@ export function DevIndex() {
             type="button"
             onClick={() => {
               window.localStorage.removeItem(STORAGE_KEY)
+              window.localStorage.removeItem(DEV_SEED_KEY)
               window.location.reload()
             }}
             className="btn-chunky w-full bg-coral py-3 text-indigo"

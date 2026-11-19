@@ -47,8 +47,20 @@ startSync()
    is therefore the very first thing the app does. See src/lib/install.ts. */
 captureInstallPrompt()
 
-createRoot(host).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+async function mount(container: HTMLElement): Promise<void> {
+  /* In the devmode build (VITE_DEV_MODE=1), pre-populate the "everything"
+     bypass preset before mounting so showcase visitors jump straight into a
+     fully unlocked, pre-answered game. Never bundled into the learner build. */
+  if (import.meta.env.VITE_DEV_MODE === '1') {
+    const { seedDevMode } = await import('./dev/bypass')
+    await seedDevMode()
+  }
+
+  createRoot(container).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  )
+}
+
+void mount(host)

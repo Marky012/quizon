@@ -1,6 +1,7 @@
 import { SKILL_IDS, SKILL_NAMES } from '@/content/manifest'
 import { STORY_POOL_IDS, TIER_ORDER, WORLD, type TierId } from '@/content/world'
 import { MAX_ATTEMPTS } from '@/constants/gameConfig'
+import { markBootSeen } from '@/lib/install'
 import {
   bestScore as bestOf,
   checkNeedsAttention,
@@ -236,10 +237,30 @@ export interface DevPreset {
   build: () => Partial<GameState> | Promise<Partial<GameState>>
 }
 
+/** Tracks which devmode preset was last seeded so a fresh visit auto-populates
+ *  only once and respects explicit resets to "fresh" via /dev. */
+export const DEV_SEED_KEY = 'quizon-devmode-seeded'
+
 const onboards: Partial<GameState> = {
   hasStarted: true,
   profileCreated: true,
   introCompleted: true,
+  playerFullName: 'Grade 5 Reader',
+  playerNickname: 'Reader',
+}
+
+function withActiveTier(
+  tiers: Record<string, TierState>,
+  active: ActiveAttempt,
+): Record<string, TierState> {
+  return {
+    ...tiers,
+    [active.tierId]: {
+      ...tiers[active.tierId]!,
+      storyId: active.storyId,
+      answeredCorrectThisAttempt: active.correct > 0,
+    },
+  }
 }
 
 export const DEV_PRESETS: DevPreset[] = [
@@ -286,12 +307,15 @@ export const DEV_PRESETS: DevPreset[] = [
     label: 'Quiz in progress (resume)',
     note: 'A real attempt seven items in. Tests Continue in the Arena and the resume itself.',
     lands: '/arena',
-    build: async () => ({
-      ...onboards,
-      skills: allSkills(true, true),
-      tiers: buildTiers({}),
-      activeAttempts: { easy: await liveAttempt('easy', 7, 5) },
-    }),
+    build: async () => {
+      const easyAttempt = await liveAttempt('easy', 7, 5)
+      return {
+        ...onboards,
+        skills: allSkills(true, true),
+        tiers: withActiveTier(buildTiers({}), easyAttempt),
+        activeAttempts: { easy: easyAttempt },
+      }
+    },
   },
   {
     id: 'easy-passed',
@@ -339,16 +363,24 @@ export const DEV_PRESETS: DevPreset[] = [
   {
     id: 'everything',
     label: 'Everything done',
-    note: 'All lessons, all pups, Easy and Medium passed, a Hard attempt in progress.',
-    lands: '/record',
-    build: async () => ({
-      ...onboards,
-      skills: allSkills(true, true).map((k) => ({ ...k, pupUses: 3 })),
-      tiers: buildTiers({ easy: [attempt(85)], medium: [attempt(75)] }),
-      activeAttempts: { hard: await liveAttempt('hard', 3, 2) },
-      skillMissedCount: someMisses(),
-      totals: { correct: 74, incorrect: 26 },
-    }),
+    note: 'All lessons, all pups, all three levels passed, a Hard attempt in progress.',
+    lands: '/hub',
+    build: async () => {
+      const hardAttempt = await liveAttempt('hard', 3, 2)
+      const tiers = buildTiers({
+        easy: [attempt(85)],
+        medium: [attempt(75)],
+        hard: [attempt(90)],
+      })
+      return {
+        ...onboards,
+        skills: allSkills(true, true).map((k) => ({ ...k, pupUses: 3 })),
+        tiers: withActiveTier(tiers, hardAttempt),
+        activeAttempts: { hard: hardAttempt },
+        skillMissedCount: someMisses(),
+        totals: { correct: 74, incorrect: 26 },
+      }
+    },
   },
 ]
 
@@ -357,4 +389,27 @@ export async function applyDevPreset(id: string): Promise<void> {
   const preset = DEV_PRESETS.find((p) => p.id === id)
   if (!preset) return
   useGameStore.setState(await preset.build())
+  try {
+    window.localStorage.setItem(DEV_SEED_KEY, id)
+  } catch {
+    /* private mode or non-DOM test */
+  }
+}
+
+/**
+ * Automatically seed the devmode build with the "everything" preset on first
+ * launch so showcase/QR-code visitors immediately explore the pre-answered game.
+ */
+export async function seedDevMode(): Promise<void> {
+  markBootSeen()
+  let seeded: string | null = null
+  try {
+    seeded = window.localStorage.getItem(DEV_SEED_KEY)
+  } catch {
+    /* ignore storage errors */
+  }
+  const hasStarted = useGameStore.getState().hasStarted
+  if (!seeded || (!hasStarted && seeded !== 'fresh')) {
+    await applyDevPreset('everything')
+  }
 }

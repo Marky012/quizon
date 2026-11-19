@@ -401,7 +401,7 @@ A second Netlify site (`quizon-student-devmode`) builds the same `main` branch w
 VITE_DEV_MODE=1
 ```
 
-That build exposes `/dev` — a screen index with state presets for reviewing screens that normally need earned progress. The learner build does not set the flag, so the route is still tree-shaken out.
+On launch, the devmode build automatically applies the `everything` preset (onboarding skipped, all 8 lessons and pups earned, Easy/Medium/Hard pre-answered and passed, and an active Hard quiz ready to resume) so demo and showcase visitors jump straight into a fully unlocked game. It also exposes `/dev` — a screen index with all state presets for switching states or inspecting edge cases. The learner build does not set the flag, so both the auto-seeder and `/dev` route are tree-shaken out.
 
 Do **not** set `VITE_SYNC_ENDPOINT` on the devmode site; preset progress must never reach the real teacher dashboard.
 
@@ -409,7 +409,7 @@ Local check (PowerShell):
 
 ```powershell
 $env:VITE_DEV_MODE="1"; npm run build; Remove-Item Env:\VITE_DEV_MODE
-npm run preview   # open http://localhost:8080/dev
+npm run preview   # opens straight into the pre-answered game; /dev switches presets
 ```
 
 ---
