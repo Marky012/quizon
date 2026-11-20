@@ -1,0 +1,49 @@
+# Render Blueprint for QuizOn! static PWAs.
+# Mirrors netlify.toml: SPA fallback rewrite plus non-cached /sw.js and /index.html.
+# Note: Do NOT set VITE_SYNC_ENDPOINT on quizon-student-devmode.
+
+services:
+  - type: web
+    name: quizon-student-devmode
+    runtime: static
+    branch: main
+    buildCommand: npm install --include=dev && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_DEV_MODE
+        value: "1"
+    headers:
+      - path: /sw.js
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate
+      - path: /index.html
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  - type: web
+    name: quizon-student
+    runtime: static
+    branch: main
+    buildCommand: npm install --include=dev && npm run build
+    staticPublishPath: ./dist
+    headers:
+      - path: /sw.js
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate
+      - path: /index.html
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
